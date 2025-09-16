@@ -8,7 +8,7 @@ import { MdEmail } from "react-icons/md";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/app/lib/supabaseClient";
+import { supabase } from "../../lib/supabaseClient";
 
 const LoginPages = () => {
   const [password, setPassword] = useState("");
