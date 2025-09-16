@@ -8,9 +8,9 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 const DeliveryOption = () => {
   const [visible, setVisible] = useState(true);
+  const router = useRouter();
 
   if (!visible) return null;
-  const router = useRouter();
   return (
     <div
       className="DeliveryOption d-flex justify-content-center align-items-center w-100"
