@@ -7,15 +7,14 @@ import { FaFacebook } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Swal from "sweetalert2";
-
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../../context/contextApi";
+import { supabase } from "@/app/lib/supabaseClient";
+
 const LoginPages = () => {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { user, isAuthenticated, login } = useAuth();
   const router = useRouter();
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -30,7 +29,7 @@ const LoginPages = () => {
       });
     }
     try {
-      const response = await login({
+      const response = await supabase.auth.signInWithPassword({
         email,
         password,
       });
