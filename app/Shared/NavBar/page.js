@@ -3,21 +3,36 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
+import { useAuth } from "../../context/Authcontext";
 
 const NavBar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isAuthenticated, userName, logout, isCustomer, Isresturant } =
+    useAuth();
+  let dashboardLink;
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  if (isAuthenticated && isCustomer) {
+    dashboardLink = "/pages/userDashboard";
+  } else if (isAuthenticated && Isresturant) {
+    dashboardLink = "/pages/resturantDashboard";
+  } else {
+    dashboardLink = "/user/login";
+  }
+
   const navLinks = [
     { name: "الصفحة الرئيسية", href: "/" },
     { name: "المطاعم", href: "/pages/allResturants" },
-    { name: "العروض", href: "#" },
     { name: "عن الشركة", href: "#" },
     { name: "تواصل معنا", href: "#" },
   ];
+
+  if (isAuthenticated) {
+    navLinks.splice(2, 0, { name: "لوحة التحكم", href: dashboardLink });
+  }
 
   return (
     <>
@@ -47,12 +62,27 @@ const NavBar = () => {
         </div>
 
         {/* Desktop Login/Signup Button */}
-        <Link
-          href="/user/login"
-          className="hidden nav-link md:block cursor-pointer rounded-[100px] !text-white !bg-[#03081f] min-w-[180px] lg:min-w-[200px] xl:min-w-[234px] !py-[8px] text-center !px-[5px] text-[14px] lg:text-[16px] hover:!bg-[#05102a] transition-colors duration-300"
-        >
-          تسجيل/انشاء حساب
-        </Link>
+        {isAuthenticated ? (
+          <div className="flex items-center gap-4 max-md:hidden">
+            <h1 className="!text-xl !font-bold !text-gray-800">
+              ..مرحبا,
+              <span className="!text-blue-600">{userName?.slice(0, 10)}</span>
+            </h1>
+            <button
+              onClick={logout}
+              className="nav-link cursor-pointer rounded-[100px] !text-white !bg-red-600 min-w-[100px] xl:min-w-[127px] !py-[8px] text-center !px-[5px] text-[14px] lg:text-[16px] hover:!bg-red-700 transition-colors duration-300"
+            >
+              تسجيل الخروج
+            </button>
+          </div>
+        ) : (
+          <Link
+            href="/user/login"
+            className="hidden nav-link md:block cursor-pointer rounded-[100px] !text-white !bg-[#03081f] min-w-[180px] lg:min-w-[200px] xl:min-w-[234px] !py-[8px] text-center !px-[5px] text-[14px] lg:text-[16px] hover:!bg-[#05102a] transition-colors duration-300"
+          >
+            تسجيل/انشاء حساب
+          </Link>
+        )}
 
         {/* Mobile Menu Button */}
         <button
@@ -110,21 +140,49 @@ const NavBar = () => {
         </nav>
 
         {/* Mobile Login/Signup Button */}
-        <div className="p-5 border-t border-gray-200 mt-auto">
-          <button className="w-full nav-link cursor-pointer rounded-[100px] !text-white !bg-[#03081f] !py-3 !px-5 text-center text-[16px] font-medium hover:!bg-[#05102a] transition-colors duration-300">
-            تسجيل/انشاء حساب
-          </button>
-        </div>
+        {isAuthenticated ? (
+          <div className="flex items-center gap-4">
+            <h1 className="!text-lg !font-bold !text-gray-800">
+              Welcome,
+              <span className="!text-blue-600">{userName?.slice(0, 10)}..</span>
+            </h1>
+            <button
+              onClick={logout}
+              className="nav-link cursor-pointer rounded-[100px] !text-white !bg-red-600 min-w-[100px] xl:min-w-[127px] !py-[8px] text-center !px-[5px] text-[14px] lg:text-[16px] hover:!bg-red-700 transition-colors duration-300"
+            >
+              تسجيل الخروج
+            </button>
+          </div>
+        ) : (
+          <div className="p-5 border-t border-gray-200 mt-auto">
+            <Link
+              href="/user/login"
+              className="w-full nav-link cursor-pointer rounded-[100px] !text-white !bg-[#03081f] !py-3 !px-5 text-center text-[16px] font-medium hover:!bg-[#05102a] transition-colors duration-300"
+            >
+              تسجيل/انشاء حساب
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Tablet Menu (md screens) - Simplified version */}
-      <div className="md:hidden sm:block bg-[#FFF] w-full px-5 py-2">
-        <div className="flex justify-center">
-          <button className="cursor-pointer nav-link rounded-[100px] !text-white !bg-[#03081f] min-w-[200px] !py-[8px] text-center !px-[5px] text-[14px] hover:!bg-[#05102a] transition-colors duration-300">
-            تسجيل/انشاء حساب
-          </button>
+      {/* {isAuthenticated ? (
+        <h1 className="!text-lg !font-bold !text-gray-800">
+          Welcome,
+          <span className="!text-blue-600">{userName?.slice(0, 10)}..</span>
+        </h1>
+      ) : (
+        <div className="md:hidden sm:block bg-[#FFF] w-full px-5 py-2">
+          <div className="flex justify-center">
+            <Link
+              href="/user/login"
+              className="cursor-pointer nav-link rounded-[100px] !text-white !bg-[#03081f] min-w-[200px] !py-[8px] text-center !px-[5px] text-[14px] hover:!bg-[#05102a] transition-colors duration-300"
+            >
+              تسجيل/انشاء حساب
+            </Link>
+          </div>
         </div>
-      </div>
+      )} */}
     </>
   );
 };

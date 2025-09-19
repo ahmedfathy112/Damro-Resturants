@@ -25,6 +25,10 @@ const RegisterPage = () => {
     confirmPassword: "",
     user_type: "customer",
     phone: "",
+    address: "",
+    restaurant_name: "",
+    description: "",
+    restaurant_address: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -61,6 +65,19 @@ const RegisterPage = () => {
       newErrors.phone = "رقم الهاتف مطلوب";
     }
 
+    if (formData.user_type === "restaurant") {
+      if (!formData.restaurant_name.trim()) {
+        newErrors.restaurant_name = "اسم المطعم مطلوب";
+      }
+      if (!formData.restaurant_address.trim()) {
+        newErrors.restaurant_address = "عنوان المطعم مطلوب";
+      }
+    } else {
+      if (!formData.address.trim()) {
+        newErrors.address = "العنوان مطلوب";
+      }
+    }
+
     return newErrors;
   };
 
@@ -94,15 +111,30 @@ const RegisterPage = () => {
     setErrors({});
 
     try {
+      // define user metadata
+      let userMetadata = {
+        full_name: formData.full_name,
+        user_type: formData.user_type,
+        phone: formData.phone,
+      };
+
+      // add restaurant name for restaurant
+      if (formData.user_type === "restaurant") {
+        userMetadata.restaurant_name = formData.restaurant_name;
+        userMetadata.restaurant_address = formData.restaurant_address;
+        userMetadata.description = formData.description;
+      }
+      // add address for customer
+      else if (formData.user_type === "customer") {
+        userMetadata.address = formData.address;
+      }
+
+      // create user
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
-          data: {
-            full_name: formData.full_name,
-            user_type: formData.user_type,
-            phone: formData.phone,
-          },
+          data: userMetadata,
         },
       });
 
@@ -111,7 +143,67 @@ const RegisterPage = () => {
         return;
       }
 
-      // Success Message
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // make sure the user is added to the correct table
+      if (formData.user_type === "restaurant") {
+        const { data: restaurantData, error: restaurantError } = await supabase
+          .from("restaurants")
+          .select("*")
+          .eq("id", data.user.id)
+          .single();
+
+        if (restaurantError || !restaurantData) {
+          // add the restaurant to the restaurants table
+          await supabase.from("restaurants").insert([
+            {
+              id: data.user.id,
+              name: formData.restaurant_name,
+              email: formData.email,
+              phone: formData.phone,
+              description: formData.description,
+              address: formData.restaurant_address,
+            },
+          ]);
+        } else {
+          // if the restaurant already exists update his data
+          await supabase
+            .from("restaurants")
+            .update({
+              description: formData.description,
+              address: formData.restaurant_address,
+            })
+            .eq("id", data.user.id);
+        }
+      } else {
+        const { data: userData, error: userError } = await supabase
+          .from("app_users")
+          .select("*")
+          .eq("id", data.user.id)
+          .single();
+
+        if (userError || !userData) {
+          // add the user to the app_users table
+          await supabase.from("app_users").insert([
+            {
+              id: data.user.id,
+              full_name: formData.full_name,
+              phone: formData.phone,
+              address: formData.address,
+            },
+          ]);
+        } else {
+          // if the user already exists update his data
+          await supabase
+            .from("app_users")
+            .update({
+              address: formData.address,
+            })
+            .eq("id", data.user.id);
+        }
+      }
+
+      // success message
       Swal.fire({
         title: `تم إنشاء حسابك بنجاح! ${
           formData.user_type === "restaurant"
@@ -122,10 +214,10 @@ const RegisterPage = () => {
         draggable: true,
       });
 
-      // route the user to login page
+      // redirect to login
       router.push("/user/login");
     } catch (error) {
-      setErrors({ submit: "حدث خطأ غير متوقع" });
+      setErrors({ submit: "حدث خطأ غير متوقع: " + error.message });
     } finally {
       setLoading(false);
     }
@@ -201,7 +293,8 @@ const RegisterPage = () => {
                 </div>
               </div>
 
-              {/* الاسم الكامل */}
+              {/* in case he is user */}
+              {/* Full name */}
               <div className="mb-3">
                 <label htmlFor="full_name" className="form-label fw-semibold">
                   الاسم الكامل{" "}
@@ -227,7 +320,35 @@ const RegisterPage = () => {
                 )}
               </div>
 
-              {/* البريد الإلكتروني */}
+              {/* full name for restaurant */}
+              {formData.user_type === "restaurant" && (
+                <div className="mb-3">
+                  <label
+                    htmlFor="restaurant_name"
+                    className="form-label fw-semibold"
+                  >
+                    اسم المطعم
+                  </label>
+                  <input
+                    type="text"
+                    id="restaurant_name"
+                    name="restaurant_name"
+                    className={`form-control ${
+                      errors.restaurant_name ? "is-invalid" : ""
+                    }`}
+                    placeholder="أدخل اسم المطعم"
+                    value={formData.restaurant_name}
+                    onChange={handleInputChange}
+                  />
+                  {errors.restaurant_name && (
+                    <div className="invalid-feedback">
+                      {errors.restaurant_name}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Email */}
               <div className="mb-3">
                 <label htmlFor="email" className="form-label fw-semibold">
                   البريد الإلكتروني
@@ -246,8 +367,7 @@ const RegisterPage = () => {
                 )}
               </div>
 
-              {/* رقم الهاتف - للمطاعم فقط */}
-
+              {/* Phone Num  */}
               <div className="mb-3">
                 <label htmlFor="phone" className="form-label fw-semibold">
                   رقم الهاتف
@@ -257,7 +377,7 @@ const RegisterPage = () => {
                   id="phone"
                   name="phone"
                   className={`form-control ${errors.phone ? "is-invalid" : ""}`}
-                  placeholder="أدخل رقم هاتف المطعم"
+                  placeholder="أدخل رقم هاتفك"
                   value={formData.phone}
                   onChange={handleInputChange}
                 />
@@ -266,7 +386,77 @@ const RegisterPage = () => {
                 )}
               </div>
 
-              {/* كلمة المرور */}
+              {/* address */}
+              {formData.user_type === "customer" ? (
+                <div className="mb-3">
+                  <label htmlFor="address" className="form-label fw-semibold">
+                    عنوان المنزل
+                  </label>
+                  <input
+                    type="text"
+                    id="address"
+                    name="address"
+                    className={`form-control ${
+                      errors.address ? "is-invalid" : ""
+                    }`}
+                    placeholder="أدخل عنوان منزلك"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                  />
+                  {errors.address && (
+                    <div className="invalid-feedback">{errors.address}</div>
+                  )}
+                </div>
+              ) : (
+                // in case the user is a restaurant
+                <div className="mb-3">
+                  <label
+                    htmlFor="restaurant_address"
+                    className="form-label fw-semibold"
+                  >
+                    عنوان المطعم
+                  </label>
+                  <input
+                    type="text"
+                    id="restaurant_address"
+                    name="restaurant_address"
+                    className={`form-control ${
+                      errors.restaurant_address ? "is-invalid" : ""
+                    }`}
+                    placeholder="أدخل عنوان المطعم"
+                    value={formData.restaurant_address}
+                    onChange={handleInputChange}
+                  />
+                  {errors.restaurant_address && (
+                    <div className="invalid-feedback">
+                      {errors.restaurant_address}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* description for the restaurant */}
+              {formData.user_type === "restaurant" && (
+                <div className="mb-3">
+                  <label
+                    htmlFor="description"
+                    className="form-label fw-semibold"
+                  >
+                    وصف المطعم
+                  </label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    className="form-control"
+                    placeholder="أدخل وصفًا مختصرًا للمطعم"
+                    rows="3"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              )}
+
+              {/* Password */}
               <div className="mb-3">
                 <label htmlFor="password" className="form-label fw-semibold">
                   كلمة المرور
@@ -297,7 +487,7 @@ const RegisterPage = () => {
                 )}
               </div>
 
-              {/* تأكيد كلمة المرور */}
+              {/* Confirm Password */}
               <div className="mb-4">
                 <label
                   htmlFor="confirmPassword"
@@ -333,14 +523,14 @@ const RegisterPage = () => {
                 )}
               </div>
 
-              {/* رسالة الخطأ العامة */}
+              {/* Error Message  */}
               {errors.submit && (
                 <div className="alert alert-danger mb-3" role="alert">
                   {errors.submit}
                 </div>
               )}
 
-              {/* تنبيه للمطاعم */}
+              {/* Alert for the restaurant */}
               {formData.user_type === "restaurant" && (
                 <div className="alert alert-info mb-4" role="alert">
                   <strong>ملاحظة:</strong> حسابات المطاعم تخضع لمراجعة الإدارة
@@ -348,7 +538,7 @@ const RegisterPage = () => {
                 </div>
               )}
 
-              {/* زر الإرسال */}
+              {/* Submit */}
               <button
                 type="submit"
                 className="btn btn-primary w-100 mb-3 py-3 fw-semibold"
@@ -368,7 +558,7 @@ const RegisterPage = () => {
               <p className="text-center text-muted mb-0">
                 لديك حساب بالفعل؟{" "}
                 <Link
-                  href="/login"
+                  href="/user/login"
                   className="text-decoration-none fw-semibold text-primary"
                 >
                   تسجيل الدخول

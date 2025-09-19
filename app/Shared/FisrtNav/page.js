@@ -3,11 +3,13 @@ import React, { useState } from "react";
 import { FaArrowAltCircleDown, FaShoppingCart, FaTimes } from "react-icons/fa";
 import { MdAddLocationAlt } from "react-icons/md";
 import Image from "next/image";
+import { useAuth } from "../../context/Authcontext";
 
 const FirstNav = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Sample cart data
+  const { userAddress, resturantAddress, isCustomer, Isresturant } = useAuth();
+  // fack data
   const [cartItems, setCartItems] = useState([
     {
       id: 1,
@@ -76,33 +78,38 @@ const FirstNav = () => {
     <>
       <div className="!bg-[#FAFAFA] rounded-b-[12px] w-full flex justify-between cursor-pointer !px-7 max-md:flex-col max-md:!mt-5">
         {/* Address */}
-        <div className="flex flex-row gap-3 items-center !pl-[10px] max-md:!py-3">
+        <div className="flex flex-row gap-3 items-center !py-3 !pl-[10px] max-md:!py-3">
           <MdAddLocationAlt size={30} color="#000 mr-3" />
-          <p className="text-xl !text-[#000]">دمرو بجوار قهوه البرج</p>
+          <p className="text-xl !text-[#000]">
+            {isCustomer ? userAddress : resturantAddress}
+          </p>
         </div>
 
-        {/* cart options */}
-        <div
-          className="flex flex-row items-center !bg-[#028643] rounded-b-[12px] !px-6 !py-5 hover:!bg-[#026838] transition-colors"
-          onClick={() => setIsCartOpen(true)}
-        >
-          {/* Cart Icon */}
-          <div className="border-r-[1px] text-[26px] font-bold text-[#ffffff] px-[8px]">
-            <FaShoppingCart />
+        {/* if the user is resturant hide the popUp */}
+        {Isresturant ? null : (
+          // cart section
+          <div
+            className="flex flex-row items-center !bg-[#028643] rounded-b-[12px] !px-6 !py-5 hover:!bg-[#026838] transition-colors"
+            onClick={() => setIsCartOpen(true)}
+          >
+            {/* Cart Icon */}
+            <div className="border-r-[1px] text-[26px] font-bold text-[#ffffff] px-[8px]">
+              <FaShoppingCart />
+            </div>
+            {/* Cart Items */}
+            <div className="border-r-[1px] text-[16px] font-bold text-[#ffffff] px-[8px]">
+              {totalItems} عنصر
+            </div>
+            {/* Cart Balance */}
+            <div className="border-r-[1px] text-[16px] font-bold text-[#ffffff] px-[8px]">
+              £{totalPrice.toFixed(2)}
+            </div>
+            {/* Cart Open Icon */}
+            <div className="text-[26px] font-bold text-[#ffffff] px-[8px]">
+              <FaArrowAltCircleDown />
+            </div>
           </div>
-          {/* Cart Items */}
-          <div className="border-r-[1px] text-[16px] font-bold text-[#ffffff] px-[8px]">
-            {totalItems} عنصر
-          </div>
-          {/* Cart Balance */}
-          <div className="border-r-[1px] text-[16px] font-bold text-[#ffffff] px-[8px]">
-            £{totalPrice.toFixed(2)}
-          </div>
-          {/* Cart Open Icon */}
-          <div className="text-[26px] font-bold text-[#ffffff] px-[8px]">
-            <FaArrowAltCircleDown />
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Cart Popup */}
@@ -111,7 +118,7 @@ const FirstNav = () => {
         onClose={() => setIsCartOpen(false)}
         cartItems={cartItems}
         updateQuantity={updateQuantity}
-        total={127.9} // يمكن حسابها من البيانات
+        total={127.9}
       />
     </>
   );

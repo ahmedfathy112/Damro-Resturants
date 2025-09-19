@@ -1,4 +1,5 @@
-// components/restaurant/ProductsTab.jsx
+"use client";
+import { useState, useEffect } from "react";
 import {
   Search,
   Plus,
@@ -8,39 +9,257 @@ import {
   Star,
   ToggleLeft,
   ToggleRight,
+  Upload,
+  X,
 } from "lucide-react";
+import { supabase, supabaseAdmin } from "../../../lib/supabaseClient";
 
-const ProductsTab = ({
-  products,
-  searchTerm,
-  setSearchTerm,
-  categoryFilter,
-  setCategoryFilter,
-}) => {
-  const categories = [
-    "الجميع",
-    "المقبلات",
-    "الأطباق الرئيسية",
-    "الحلويات",
-    "المشروبات",
-  ];
+const ProductsTab = ({ restaurantId }) => {
+  const [products, setProducts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("الجميع");
+  const [loading, setLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
-  const toggleProductAvailability = (productId) => {
-    console.log(`تبديل حالة المنتج ${productId}`);
-    // هنا ستكون دالة تبديل حالة توفر المنتج
-  };
+  // حالة نموذج إضافة منتج جديد
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    description: "",
+    price: "",
+    category: "",
+    preparation_time: "",
+    image_url: "",
+  });
 
-  const handleEditProduct = (productId) => {
-    console.log(`تعديل المنتج ${productId}`);
-    // هنا ستكون دالة فتح نافذة تعديل المنتج
-  };
+  useEffect(() => {
+    fetchProducts();
+  }, [restaurantId]);
 
-  const handleDeleteProduct = (productId) => {
-    if (confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
-      console.log(`حذف المنتج ${productId}`);
-      // هنا ستكون دالة حذف المنتج
+  const fetchProducts = async () => {
+    if (!restaurantId) return;
+
+    try {
+      setLoading(true);
+
+      const { data, error } = await supabase
+        .from("menu_items")
+        .select("*")
+        .eq("restaurant_id", restaurantId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setProducts(data || []);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setLoading(false);
     }
   };
+
+  // استخراج الفئات الفريدة من المنتجات
+  const categories = [
+    "الجميع",
+    ...new Set(products.map((product) => product.category).filter(Boolean)),
+  ];
+
+  // تصفية المنتجات حسب البحث والفئة
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesCategory =
+      categoryFilter === "الجميع" || product.category === categoryFilter;
+
+    return matchesSearch && matchesCategory;
+  });
+
+  // رفع صورة المنتج
+
+  const uploadProductImage = async (file) => {
+    try {
+      setUploading(true);
+
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${restaurantId}/${fileName}`;
+
+      // استخدام supabaseAdmin بدلاً من supabase العادي
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from("menu-item-images")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error("Upload error details:", uploadError);
+        throw new Error("فشل في رفع الصورة: " + uploadError.message);
+      }
+
+      // الحصول على رابط الصورة باستخدام العميل العادي
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("menu-item-images").getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      throw new Error("حدث خطأ أثناء رفع الصورة: " + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // إضافة منتج جديد
+  const handleAddProduct = async (e) => {
+    e.preventDefault();
+
+    try {
+      const { error } = await supabase.from("menu_items").insert([
+        {
+          ...newProduct,
+          restaurant_id: restaurantId,
+          price: parseFloat(newProduct.price),
+          preparation_time: parseInt(newProduct.preparation_time) || null,
+          is_available: true,
+        },
+      ]);
+
+      if (error) throw error;
+
+      // إعادة تعيين النموذج وإخفائه
+      setNewProduct({
+        name: "",
+        description: "",
+        price: "",
+        category: "",
+        preparation_time: "",
+        image_url: "",
+      });
+      setShowAddForm(false);
+
+      // إعادة تحميل المنتجات
+      fetchProducts();
+
+      alert("تم إضافة المنتج بنجاح!");
+    } catch (error) {
+      console.error("Error adding product:", error);
+      alert("حدث خطأ أثناء إضافة المنتج");
+    }
+  };
+
+  // تبديل حالة توفر المنتج
+  const toggleProductAvailability = async (productId, currentStatus) => {
+    try {
+      const { error } = await supabase
+        .from("menu_items")
+        .update({
+          is_available: !currentStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", productId);
+
+      if (error) throw error;
+
+      // تحديث الحالة المحلية
+      setProducts((prevProducts) =>
+        prevProducts.map((product) =>
+          product.id === productId
+            ? { ...product, is_available: !currentStatus }
+            : product
+        )
+      );
+    } catch (error) {
+      console.error("Error toggling product availability:", error);
+    }
+  };
+
+  // حذف منتج
+  const handleDeleteProduct = async (productId) => {
+    if (!confirm("هل أنت متأكد من حذف هذا المنتج؟")) return;
+
+    try {
+      const { error } = await supabase
+        .from("menu_items")
+        .delete()
+        .eq("id", productId);
+
+      if (error) throw error;
+
+      // تحديث الحالة المحلية
+      setProducts((prevProducts) =>
+        prevProducts.filter((product) => product.id !== productId)
+      );
+
+      alert("تم حذف المنتج بنجاح!");
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      alert("حدث خطأ أثناء حذف المنتج");
+    }
+  };
+
+  // معالجة تحميل الصورة
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // التحقق من حجم الصورة
+    if (file.size > 5 * 1024 * 1024) {
+      // 5MB
+      alert("حجم الصورة يجب أن يكون أقل من 5MB");
+      return;
+    }
+
+    // التحقق من نوع الملف
+    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+    if (!validTypes.includes(file.type)) {
+      alert("نوع الملف غير مدعوم. يرجى استخدام صورة JPEG, PNG, أو WebP");
+      return;
+    }
+
+    try {
+      const imageUrl = await uploadProductImage(file);
+      setNewProduct((prev) => ({ ...prev, image_url: imageUrl }));
+      alert("✓ تم رفع الصورة بنجاح");
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert(`خطأ في رفع الصورة: ${error.message}`);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 relative">
+              <div className="w-full h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+            </div>
+            <div className="w-32 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+            <div className="w-24 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 animate-pulse"
+            >
+              <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded mb-2"></div>
+              <div className="h-3 bg-gray-200 rounded mb-4"></div>
+              <div className="h-8 bg-gray-200 rounded"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -71,277 +290,276 @@ const ProductsTab = ({
               </option>
             ))}
           </select>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
             <Plus size={20} />
             إضافة منتج جديد
           </button>
         </div>
       </div>
 
-      {/* شبكة المنتجات */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {products.map((product) => (
-          <div
-            key={product.id}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group hover:shadow-md transition-shadow"
-          >
-            {/* صورة المنتج */}
-            <div className="relative">
-              <img
-                src={product.image || "/placeholder-food.jpg"}
-                alt={product.name}
-                className="w-full h-48 object-cover"
-              />
-              <div className="absolute top-2 left-2">
-                <button
-                  onClick={() => toggleProductAvailability(product.id)}
-                  className={`p-2 rounded-full ${
-                    product.isAvailable
-                      ? "bg-green-100 text-green-600 hover:bg-green-200"
-                      : "bg-red-100 text-red-600 hover:bg-red-200"
-                  } transition-colors`}
-                >
-                  {product.isAvailable ? (
-                    <ToggleRight size={20} />
-                  ) : (
-                    <ToggleLeft size={20} />
-                  )}
-                </button>
+      {/* نموذج إضافة منتج جديد */}
+      {showAddForm && (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-800">
+              إضافة منتج جديد
+            </h3>
+            <button
+              onClick={() => setShowAddForm(false)}
+              className="p-2 text-gray-500 hover:text-gray-700"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          <form onSubmit={handleAddProduct} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  اسم المنتج *
+                </label>
+                <input
+                  type="text"
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  value={newProduct.name}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, name: e.target.value })
+                  }
+                />
               </div>
-              <div className="absolute top-2 right-2">
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    product.isAvailable
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {product.isAvailable ? "متاح" : "غير متاح"}
-                </span>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  السعر (ج.م) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  step="0.01"
+                  min="0"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  value={newProduct.price}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, price: e.target.value })
+                  }
+                />
               </div>
             </div>
 
-            {/* معلومات المنتج */}
-            <div className="p-4">
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="font-semibold text-gray-900 text-sm line-clamp-2">
-                  {product.name}
-                </h3>
-                <span className="text-lg font-bold text-green-600 mr-2">
-                  {product.price} ج.م
-                </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  الفئة *
+                </label>
+                <select
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  value={newProduct.category}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, category: e.target.value })
+                  }
+                >
+                  <option value="">اختر الفئة</option>
+                  <option value="المقبلات">المقبلات</option>
+                  <option value="الأطباق الرئيسية">الأطباق الرئيسية</option>
+                  <option value="الحلويات">الحلويات</option>
+                  <option value="المشروبات">المشروبات</option>
+                </select>
               </div>
 
-              <p className="text-gray-600 text-xs mb-3 line-clamp-2">
-                {product.description}
-              </p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  وقت التحضير (دقيقة)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  value={newProduct.preparation_time}
+                  onChange={(e) =>
+                    setNewProduct({
+                      ...newProduct,
+                      preparation_time: e.target.value,
+                    })
+                  }
+                />
+              </div>
+            </div>
 
-              <div className="flex items-center gap-2 mb-3">
-                <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
-                  {product.category}
-                </span>
-                {product.rating && (
-                  <div className="flex items-center gap-1">
-                    <Star
-                      className="text-yellow-400"
-                      size={12}
-                      fill="currentColor"
-                    />
-                    <span className="text-xs text-gray-600">
-                      {product.rating}
-                    </span>
-                  </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                وصف المنتج
+              </label>
+              <textarea
+                rows="3"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
+                value={newProduct.description}
+                onChange={(e) =>
+                  setNewProduct({ ...newProduct, description: e.target.value })
+                }
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                صورة المنتج
+              </label>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 transition-colors">
+                  <Upload size={18} />
+                  {uploading ? "جاري الرفع..." : "اختر صورة"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                    disabled={uploading}
+                  />
+                </label>
+                {newProduct.image_url && (
+                  <span className="text-sm text-green-600">
+                    ✓ تم رفع الصورة
+                  </span>
                 )}
               </div>
-
-              {/* معلومات إضافية */}
-              <div className="text-xs text-gray-500 mb-3">
-                <p>وقت التحضير: {product.preparationTime} دقيقة</p>
-                <p>تم الطلب {product.ordersCount} مرة</p>
-              </div>
-
-              {/* الإجراءات */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleEditProduct(product.id)}
-                  className="flex-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors flex items-center justify-center gap-1 text-sm"
-                >
-                  <Edit size={14} />
-                  تعديل
-                </button>
-                <button className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                  <Eye size={14} />
-                </button>
-                <button
-                  onClick={() => handleDeleteProduct(product.id)}
-                  className="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
             </div>
-          </div>
-        ))}
-      </div>
 
-      {/* إحصائيات المنتجات */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            أفضل المنتجات مبيعاً
-          </h3>
-          <div className="space-y-3">
-            {products
-              .sort((a, b) => b.ordersCount - a.ordersCount)
-              .slice(0, 5)
-              .map((product, index) => (
-                <div
-                  key={product.id}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-sm font-medium">
-                      {index + 1}
-                    </span>
-                    <span className="text-gray-900 text-sm">
-                      {product.name}
-                    </span>
-                  </div>
-                  <span className="text-gray-600 text-sm">
-                    {product.ordersCount} طلب
+            <div className="flex gap-4 pt-4">
+              <button
+                type="submit"
+                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                إضافة المنتج
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAddForm(false)}
+                className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+              >
+                إلغاء
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* شبكة المنتجات */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {filteredProducts.length === 0 ? (
+          <div className="col-span-full text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
+            <p className="text-gray-500">
+              {searchTerm || categoryFilter !== "الجميع"
+                ? "لا توجد منتجات تطابق معايير البحث"
+                : "لا توجد منتجات حتى الآن"}
+            </p>
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              إضافة أول منتج
+            </button>
+          </div>
+        ) : (
+          filteredProducts.map((product) => (
+            <div
+              key={product.id}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group hover:shadow-md transition-shadow"
+            >
+              {/* صورة المنتج */}
+              <div className="relative">
+                <img
+                  src={product.image_url || "/placeholder-food.jpg"}
+                  alt={product.name}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="absolute top-2 left-2">
+                  <button
+                    onClick={() =>
+                      toggleProductAvailability(
+                        product.id,
+                        product.is_available
+                      )
+                    }
+                    className={`p-2 rounded-full ${
+                      product.is_available
+                        ? "bg-green-100 text-green-600 hover:bg-green-200"
+                        : "bg-red-100 text-red-600 hover:bg-red-200"
+                    } transition-colors`}
+                  >
+                    {product.is_available ? (
+                      <ToggleRight size={20} />
+                    ) : (
+                      <ToggleLeft size={20} />
+                    )}
+                  </button>
+                </div>
+                <div className="absolute top-2 right-2">
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      product.is_available
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {product.is_available ? "متاح" : "غير متاح"}
                   </span>
                 </div>
-              ))}
-          </div>
-        </div>
+              </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            أعلى المنتجات تقييماً
-          </h3>
-          <div className="space-y-3">
-            {products
-              .sort((a, b) => b.rating - a.rating)
-              .slice(0, 5)
-              .map((product, index) => (
-                <div
-                  key={product.id}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 bg-yellow-100 text-yellow-700 rounded-full flex items-center justify-center text-sm font-medium">
-                      {index + 1}
-                    </span>
-                    <span className="text-gray-900 text-sm">
-                      {product.name}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Star
-                      className="text-yellow-400"
-                      size={14}
-                      fill="currentColor"
-                    />
-                    <span className="text-gray-600 text-sm">
-                      {product.rating}
-                    </span>
-                  </div>
+              {/* معلومات المنتج */}
+              <div className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-semibold text-gray-900 text-sm line-clamp-2">
+                    {product.name}
+                  </h3>
+                  <span className="text-lg font-bold text-green-600 mr-2">
+                    {product.price} ج.م
+                  </span>
                 </div>
-              ))}
-          </div>
-        </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            توزيع المنتجات حسب الفئة
-          </h3>
-          <div className="space-y-3">
-            {categories.slice(1).map((category) => {
-              const count = products.filter(
-                (p) => p.category === category
-              ).length;
-              const percentage = Math.round((count / products.length) * 100);
-              return (
-                <div key={category} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-900 text-sm">{category}</span>
-                    <span className="text-gray-600 text-sm">{count} منتج</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-blue-500 h-2 rounded-full"
-                      style={{ width: `${percentage}%` }}
-                    ></div>
-                  </div>
+                {product.description && (
+                  <p className="text-gray-600 text-xs mb-3 line-clamp-2">
+                    {product.description}
+                  </p>
+                )}
+
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
+                    {product.category}
+                  </span>
+                  {product.preparation_time && (
+                    <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
+                      ⏱️ {product.preparation_time} دقيقة
+                    </span>
+                  )}
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
 
-      {/* إضافة منتج سريع */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
-          إضافة منتج سريع
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <input
-            type="text"
-            placeholder="اسم المنتج"
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <input
-            type="number"
-            placeholder="السعر (ج.م)"
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-            <option>اختر الفئة</option>
-            {categories.slice(1).map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            placeholder="وقت التحضير (دقيقة)"
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
-            <Plus size={18} />
-            إضافة منتج
-          </button>
-        </div>
-        <div className="mt-4">
-          <textarea
-            placeholder="وصف المنتج (اختياري)"
-            rows="2"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-          ></textarea>
-        </div>
-      </div>
-
-      {/* نصائح لتحسين المبيعات */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200">
-        <h3 className="text-lg font-semibold text-blue-800 mb-3">
-          💡 نصائح لتحسين مبيعات المنتجات
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div className="space-y-2">
-            <p className="text-blue-700">• أضف صوراً جذابة للمنتجات</p>
-            <p className="text-blue-700">• اكتب أوصافاً مفصلة ومغرية</p>
-            <p className="text-blue-700">• قم بتحديث الأسعار بانتظام</p>
-          </div>
-          <div className="space-y-2">
-            <p className="text-blue-700">• تابع المنتجات غير المتاحة</p>
-            <p className="text-blue-700">
-              • اعرض عروضاً خاصة للمنتجات الأقل مبيعاً
-            </p>
-            <p className="text-blue-700">• استجب لتعليقات العملاء</p>
-          </div>
-        </div>
+                {/* الإجراءات */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      /* سيتم تنفيذ التعديل لاحقاً */
+                    }}
+                    className="flex-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors flex items-center justify-center gap-1 text-sm"
+                  >
+                    <Edit size={14} />
+                    تعديل
+                  </button>
+                  <button
+                    onClick={() => handleDeleteProduct(product.id)}
+                    className="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* إحصائيات سريعة */}
@@ -352,25 +570,21 @@ const ProductsTab = ({
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 text-center">
           <p className="text-2xl font-bold text-green-600">
-            {products.filter((p) => p.isAvailable).length}
+            {products.filter((p) => p.is_available).length}
           </p>
           <p className="text-sm text-gray-600">منتجات متاحة</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 text-center">
           <p className="text-2xl font-bold text-red-600">
-            {products.filter((p) => !p.isAvailable).length}
+            {products.filter((p) => !p.is_available).length}
           </p>
           <p className="text-sm text-gray-600">منتجات غير متاحة</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 text-center">
-          <p className="text-2xl font-bold text-yellow-600">
-            {Math.round(
-              (products.reduce((sum, p) => sum + p.rating, 0) /
-                products.length) *
-                10
-            ) / 10}
+          <p className="text-2xl font-bold text-purple-600">
+            {categories.length - 1}
           </p>
-          <p className="text-sm text-gray-600">متوسط التقييم</p>
+          <p className="text-sm text-gray-600">عدد الفئات</p>
         </div>
       </div>
     </div>

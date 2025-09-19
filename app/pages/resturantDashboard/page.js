@@ -13,11 +13,14 @@ import OrdersTab from "../../components/dashboard/resturant/OrdersTab";
 import ProductsTab from "../../components/dashboard/resturant/ProductsTab";
 import PlaceholderTab from "../../components/dashboard/admin/PlaceholderTab";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../../context/Authcontext";
 const RestaurantDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("الجميع");
+  const { userId } = useAuth();
+  console.log(userId);
 
   // بيانات وهمية للمطعم
   const stats = {
@@ -244,6 +247,7 @@ const RestaurantDashboard = () => {
       case "overview":
         return (
           <OverviewTab
+            restaurantId={userId}
             stats={stats}
             recentOrders={recentOrders}
             notifications={notifications}
@@ -252,6 +256,7 @@ const RestaurantDashboard = () => {
       case "orders":
         return (
           <OrdersTab
+            restaurantId={userId}
             orders={orders}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
@@ -262,35 +267,12 @@ const RestaurantDashboard = () => {
       case "products":
         return (
           <ProductsTab
+            restaurantId={userId}
             products={products}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
             categoryFilter={categoryFilter}
             setCategoryFilter={setCategoryFilter}
-          />
-        );
-      case "categories":
-        return (
-          <PlaceholderTab
-            icon={Package}
-            title="إدارة الفئات"
-            description="هذا القسم قيد التطوير..."
-          />
-        );
-      case "reviews":
-        return (
-          <PlaceholderTab
-            icon={Star}
-            title="إدارة التقييمات"
-            description="هذا القسم قيد التطوير..."
-          />
-        );
-      case "analytics":
-        return (
-          <PlaceholderTab
-            icon={BarChart3}
-            title="التقارير والإحصائيات"
-            description="هذا القسم قيد التطوير..."
           />
         );
       default:

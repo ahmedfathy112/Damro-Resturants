@@ -19,14 +19,14 @@ const LoginPages = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
-    // check on password and email
+    setError(""); // check on password and email
     if (!email || !password) {
       Swal.fire({
         icon: "error",
         title: "Oops...",
         text: "Please enter email and password",
       });
+      return;
     }
     try {
       const response = await supabase.auth.signInWithPassword({
@@ -35,7 +35,23 @@ const LoginPages = () => {
       });
       if (response.error) {
         setError(response.error.message);
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "حدث خطا ما أثناء تسجيل الدخول من فضلك حاول مره أخري لاحقا!",
+        });
       }
+
+      // set the token to the localStorage and redirect to home page
+      if (response.data.session) {
+        localStorage.setItem(
+          "access_token",
+          response.data.session.access_token
+        );
+        console.log(response.data.session.access_token);
+        router.push("/");
+      }
+
       setLoading(false);
       // Redirect to home page
       router.push("/");
