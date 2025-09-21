@@ -5,6 +5,7 @@ import FirstNav from "./Shared/FisrtNav/page";
 import NavBar from "./Shared/NavBar/page";
 import { AuthProvider } from "../app/context/Authcontext";
 import { CartProvider } from "../app/context/CartContext";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const poppins = Poppins({
   subsets: ["latin"],
