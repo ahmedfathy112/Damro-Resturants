@@ -48,13 +48,13 @@ export const AuthProvider = ({ children }) => {
   const [resturantAddress, setResturantAddress] = useState(null);
   const [userAddress, setUserAddress] = useState(null);
 
-  const fetchUserFromSupabase = useCallback(async (id) => {
-    if (!id) return null;
+  const fetchUserFromSupabase = useCallback(async (userId) => {
+    if (!userId) return null;
     try {
       const { data, error } = await supabase
         .from("app_users")
         .select("*")
-        .eq("id", id)
+        .eq("id", userId)
         .single();
 
       if (error) {

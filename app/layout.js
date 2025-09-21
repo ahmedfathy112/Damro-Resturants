@@ -4,6 +4,7 @@ import "./globals.css";
 import FirstNav from "./Shared/FisrtNav/page";
 import NavBar from "./Shared/NavBar/page";
 import { AuthProvider } from "../app/context/Authcontext";
+import { CartProvider } from "../app/context/CartContext";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -21,9 +22,11 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={`${poppins.className} antialiased`}>
         <AuthProvider>
-          <FirstNav />
-          <NavBar />
-          {children}
+          <CartProvider>
+            <FirstNav />
+            <NavBar />
+            {children}
+          </CartProvider>
         </AuthProvider>
       </body>
     </html>

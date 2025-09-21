@@ -3,11 +3,10 @@ import React from "react";
 import "../../../components/resturantPage/ResturentStyle.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import ResturentDatails from "../../../components/resturantPage/ResHome";
-import ResturentOffer from "../../../components/resturantPage/ResOffer";
-import Burgers from "../../../components/resturantPage/Burgers";
-import Fries from "../../../components/resturantPage/Fries";
-import ColdDrinks from "../../../components/resturantPage/ColdDrinks";
+// import Burgers from "../../../components/resturantPage/Burgers";
 import { useParams } from "next/navigation";
+import CommentSec from "../../../components/resturantPage/Comment";
+import RestaurantMenu from "../../../components/resturantPage/Burgers";
 
 const ResturantPage = () => {
   const params = useParams();
@@ -16,10 +15,8 @@ const ResturantPage = () => {
   return (
     <div>
       <ResturentDatails restaurantId={resturantId} />
-      {/* <ResturentOffer restaurantId={resturantId} /> */}
-      <Burgers restaurantId={resturantId} />
-      {/* <Fries restaurantId={resturantId} /> */}
-      {/* <ColdDrinks restaurantId={resturantId} /> */}
+      <RestaurantMenu restaurantId={resturantId} />
+      <CommentSec restaurantId={resturantId} />
     </div>
   );
 };

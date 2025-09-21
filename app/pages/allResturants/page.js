@@ -1,10 +1,11 @@
-import ResHomePagesComponent from "../../components/allResturantsPage/ResHomePagesComponent";
+import AllResApi from "../../components/allResturantsPage/AllResApi";
+// import ResHomePagesComponent from "../../components/allResturantsPage/ResHomePagesComponent";
 import React from "react";
 
 const ResTurentHomePages = () => {
   return (
     <div>
-      <ResHomePagesComponent />
+      <AllResApi />
     </div>
   );
 };

@@ -5,6 +5,8 @@ import { FaFilter, FaUtensils } from "react-icons/fa";
 import { supabase } from "../../lib/supabaseClient";
 import Image from "next/image";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/Authcontext";
 
 const RestaurantMenu = ({ restaurantId }) => {
   const [menuItems, setMenuItems] = useState([]);
@@ -14,14 +16,15 @@ const RestaurantMenu = ({ restaurantId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const { addToCart, restaurantId: currentRestaurantId } = useCart();
+  const { isCustomer } = useAuth();
+
   useEffect(() => {
     const fetchMenuItems = async () => {
       if (!restaurantId) return;
 
       try {
         setLoading(true);
-
-        // get menu items
         const { data, error: fetchError } = await supabase
           .from("menu_items")
           .select("*")
@@ -31,8 +34,6 @@ const RestaurantMenu = ({ restaurantId }) => {
         if (fetchError) throw fetchError;
 
         setMenuItems(data || []);
-
-        // get unique categories
         const uniqueCategories = [
           "الكل",
           ...new Set(data.map((item) => item.category).filter(Boolean)),
@@ -49,7 +50,6 @@ const RestaurantMenu = ({ restaurantId }) => {
     fetchMenuItems();
   }, [restaurantId]);
 
-  // filter items
   useEffect(() => {
     if (selectedCategory === "الكل") {
       setFilteredItems(menuItems);
@@ -60,9 +60,8 @@ const RestaurantMenu = ({ restaurantId }) => {
     }
   }, [menuItems, selectedCategory]);
 
-  // to add item to cart
-  const addToCart = (item) => {
-    console.log("تم إضافة الطبق إلى السلة:", item);
+  const handleAddToCart = (item) => {
+    addToCart(item, restaurantId);
   };
 
   if (loading) {
@@ -93,13 +92,13 @@ const RestaurantMenu = ({ restaurantId }) => {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1 className="text-end mb-0">قائمة الطعام</h1>
 
-        {/* عدد الأطباق */}
+        {/* Num of dishes */}
         <span className="badge bg-warning text-dark fs-6">
           {filteredItems.length} طبق
         </span>
       </div>
 
-      {/* فلترة التصنيفات */}
+      {/* filtering */}
       {categories.length > 1 && (
         <div className="mb-4">
           <div className="d-flex align-items-center gap-2 mb-3">
@@ -143,7 +142,7 @@ const RestaurantMenu = ({ restaurantId }) => {
                   className="d-flex flex-row gap-3 align-items-center"
                   style={{ justifyContent: "space-between" }}
                 >
-                  {/* صورة الطبق */}
+                  {/* item image */}
                   {item.image_url ? (
                     <Image
                       src={item.image_url}
@@ -157,6 +156,7 @@ const RestaurantMenu = ({ restaurantId }) => {
                       }}
                     />
                   ) : (
+                    // if there`s no item image
                     <div
                       style={{
                         width: "150px",
@@ -174,7 +174,7 @@ const RestaurantMenu = ({ restaurantId }) => {
                   )}
 
                   <div className="text-end flex-grow-1">
-                    {/* تصنيف الطبق */}
+                    {/* categories */}
                     {item.category && (
                       <span className="badge bg-light text-dark mb-2">
                         {item.category}
@@ -203,37 +203,40 @@ const RestaurantMenu = ({ restaurantId }) => {
                   </div>
                 </div>
 
-                {/* زر الإضافة إلى السلة */}
-                <button
-                  className="add"
-                  style={{
-                    position: "absolute",
-                    left: "0",
-                    bottom: "0",
-                    backgroundColor: "rgb(256, 256, 256, 0.9)",
-                    color: "#000",
-                    borderRadius: "0 24px 0 0",
-                    padding: "15px 20px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    border: "none",
-                    cursor: "pointer",
-                    transition: "all 0.3s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = "rgb(255, 193, 7, 0.9)";
-                    e.target.style.transform = "scale(1.05)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = "rgb(256, 256, 256, 0.9)";
-                    e.target.style.transform = "scale(1)";
-                  }}
-                  onClick={() => addToCart(item)}
-                  title="إضافة إلى السلة"
-                >
-                  <IoMdAdd size={22} />
-                </button>
+                {/* make sure that the Customer make the order */}
+                {isCustomer ? (
+                  <button
+                    className="add"
+                    style={{
+                      position: "absolute",
+                      left: "0",
+                      bottom: "0",
+                      backgroundColor: "rgb(256, 256, 256, 0.9)",
+                      color: "#000",
+                      borderRadius: "0 24px 0 0",
+                      padding: "15px 20px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: "none",
+                      cursor: "pointer",
+                      transition: "all 0.3s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = "rgb(255, 193, 7, 0.9)";
+                      e.target.style.transform = "scale(1.05)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor =
+                        "rgb(256, 256, 256, 0.9)";
+                      e.target.style.transform = "scale(1)";
+                    }}
+                    onClick={() => handleAddToCart(item)}
+                    title="إضافة إلى السلة"
+                  >
+                    <IoMdAdd size={22} />
+                  </button>
+                ) : null}
               </div>
             </div>
           ))}

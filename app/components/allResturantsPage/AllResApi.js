@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { FaStar, FaMapMarkerAlt, FaPhone, FaUtensils } from "react-icons/fa";
 import { MdFavoriteBorder } from "react-icons/md";
+import { GoSearch } from "react-icons/go";
 import { supabase } from "../../lib/supabaseClient";
 import Link from "next/link";
 import Image from "next/image";
@@ -9,34 +10,70 @@ import { useAuth } from "../../context/Authcontext";
 
 const AllResApi = () => {
   const [restaurants, setRestaurants] = useState([]);
+  const [filteredRestaurants, setFilteredRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const { userId } = useAuth();
-  const [dishCount, setDishCount] = useState(0);
 
-  // to fetch number of dishes for the restaurant
-  useEffect(() => {
-    const fetchRestaurantDishCount = async () => {
-      if (!userId) return;
+  const fetchDishCounts = async (restaurantIds) => {
+    try {
+      const countsMap = {};
 
-      try {
+      // get count of dishes for each restaurant
+      for (const restaurantId of restaurantIds) {
         const { count, error } = await supabase
           .from("menu_items")
-          .select("*", { count: "exact", head: true })
-          .eq("restaurant_id", userId);
+          .select("*", { count: "exact" })
+          .eq("restaurant_id", restaurantId);
 
-        if (error) throw error;
-
-        setDishCount(count || 0);
-      } catch (error) {
-        console.error("Error fetching dish count:", error);
+        if (error) {
+          console.error(
+            `Error fetching dishes for restaurant ${restaurantId}:`,
+            error
+          );
+          countsMap[restaurantId] = 0;
+        } else {
+          countsMap[restaurantId] = count || 0;
+        }
       }
-    };
 
-    fetchRestaurantDishCount();
-  }, [userId]);
+      return countsMap;
+    } catch (error) {
+      console.error("Error fetching dish counts:", error);
+      return {};
+    }
+  };
 
-  // to fetch all restaurants
+  // get ratings for each restaurant
+  const fetchRestaurantRatings = async (restaurantIds) => {
+    try {
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("restaurant_id, rating")
+        .in("restaurant_id", restaurantIds);
+
+      if (error) throw error;
+
+      // calculate ratings map
+      const ratingsMap = {};
+      restaurantIds.forEach((id) => {
+        ratingsMap[id] = [];
+      });
+
+      data.forEach((review) => {
+        if (ratingsMap[review.restaurant_id]) {
+          ratingsMap[review.restaurant_id].push(review.rating);
+        }
+      });
+
+      return ratingsMap;
+    } catch (error) {
+      console.error("Error fetching ratings:", error);
+      return {};
+    }
+  };
+
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
@@ -52,10 +89,18 @@ const AllResApi = () => {
           throw fetchError;
         }
 
-        // calculate average rating and number of dishes for each restaurant
+        // get restaurant IDs
+        const restaurantIds = data.map((restaurant) => restaurant.id);
+
+        // get dish counts for each restaurant
+        const dishCountsMap = await fetchDishCounts(restaurantIds);
+
+        // get ratings for each restaurant
+        const ratingsMap = await fetchRestaurantRatings(restaurantIds);
+
+        // merging data
         const restaurantsWithStats = data.map((restaurant) => {
-          const ratings =
-            restaurant.reviews?.map((review) => review.rating) || [];
+          const ratings = ratingsMap[restaurant.id] || [];
           const averageRating =
             ratings.length > 0
               ? (
@@ -68,10 +113,13 @@ const AllResApi = () => {
             ...restaurant,
             average_rating: parseFloat(averageRating),
             total_reviews: ratings.length,
+            dish_count: dishCountsMap[restaurant.id] || 0, // إضافة عدد الأطباق
           };
         });
 
+        console.log(restaurantsWithStats);
         setRestaurants(restaurantsWithStats);
+        setFilteredRestaurants(restaurantsWithStats);
       } catch (error) {
         console.error("Error fetching restaurants:", error);
         setError("حدث خطأ في تحميل المطاعم");
@@ -82,6 +130,18 @@ const AllResApi = () => {
 
     fetchRestaurants();
   }, []);
+
+  // Filter restaurants based on search term
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredRestaurants(restaurants);
+    } else {
+      const filtered = restaurants.filter((restaurant) =>
+        restaurant.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredRestaurants(filtered);
+    }
+  }, [searchTerm, restaurants]);
 
   if (loading) {
     return (
@@ -123,26 +183,59 @@ const AllResApi = () => {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="row !mb-10 !px-4">
+        <div className="w-full flex flex-row justify-between !mx-auto">
+          <h3 className="!text-2xl ">مطاعمنا</h3>
+          <div
+            className="flex items-center px-3 py-2 rounded"
+            style={{ border: "1px solid #ccc", backgroundColor: "#fff" }}
+          >
+            <GoSearch size={20} className="ms-2 text-gray-500" />
+            <input
+              type="text"
+              className="form-control border-0 p-0 ms-2"
+              placeholder="ابحث عن مطعم..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                outline: "none",
+                boxShadow: "none",
+                color: "#000",
+                backgroundColor: "transparent",
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
       <div
-        className="row g-4 mt-4 d-flex align-items-center"
+        className="w-full flex flex-row justify-center flex-wrap gap-4"
         style={{ justifyContent: "center" }}
       >
-        {restaurants.length === 0 ? (
+        {/* check if there`s any resturants */}
+        {filteredRestaurants.length === 0 ? (
           <div className="col-12 text-center py-5">
             <FaUtensils size={64} className="text-muted mb-3" />
-            <h4 className="text-muted">لا توجد مطاعم متاحة حالياً</h4>
+            <h4 className="text-muted">
+              {searchTerm
+                ? "لم يتم العثور على مطاعم"
+                : "لا توجد مطاعم متاحة حالياً"}
+            </h4>
             <p className="text-muted">
-              لم يتم إضافة أي مطاعم بعد أو أن المطاعم قيد المراجعة
+              {searchTerm
+                ? "جرب البحث باسم آخر أو تحقق من التهجئة"
+                : "لم يتم إضافة أي مطاعم بعد أو أن المطاعم قيد المراجعة"}
             </p>
           </div>
         ) : (
-          restaurants.map((restaurant) => (
+          filteredRestaurants.map((restaurant) => (
             <div
               key={restaurant.id}
-              className="col-lg-3 col-md-4 col-sm-6 col-12 mb-5 pb-1"
+              className="w-1/4 flex flex-col justify-center items-center mb-4 px-2"
             >
               <div
-                className="card text-center h-100 position-relative"
+                className="card w-full text-center !h-100 !position-relative"
                 style={{
                   border: "none",
                   borderRadius: "15px",
@@ -159,7 +252,7 @@ const AllResApi = () => {
                   e.currentTarget.style.transform = "translateY(0)";
                 }}
               >
-                {/* resturant Image */}
+                {/* restaurant Image */}
                 <div
                   style={{
                     width: "100px",
@@ -189,15 +282,15 @@ const AllResApi = () => {
                   )}
                 </div>
 
-                <div className="card-body">
-                  {/* resturant name */}
+                <div className="card-body !px-3">
+                  {/* restaurant name */}
                   <h5 className="fw-bold mb-2" style={{ minHeight: "48px" }}>
                     {restaurant.name}
                   </h5>
 
                   {/* reviews and num of dishes*/}
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <div className="d-flex flex-column align-items-center">
+                  <div className="flex flex-row justify-between items-center mb-3">
+                    <div className="flex flex-col items-center">
                       <span className="text-warning fw-bold d-flex align-items-center">
                         <FaStar className="text-amber-400 me-1" />
                         {restaurant.average_rating}
@@ -207,16 +300,17 @@ const AllResApi = () => {
                       </small>
                     </div>
 
-                    <div className="d-flex flex-column align-items-center">
-                      <span className="fw-bold">{dishCount}</span>
+                    {/* count of dishes */}
+                    <div className="flex flex-col items-center">
+                      <span className="fw-bold">{restaurant.dish_count}</span>
                       <small className="text-muted">الأطباق</small>
                     </div>
                   </div>
 
-                  {/* resturant details*/}
-                  <div className="restaurant-info mb-3">
+                  {/* restaurant details*/}
+                  <div className="restaurant-info !mb-3">
                     {restaurant.address && (
-                      <div className="d-flex align-items-center justify-content-center mb-2">
+                      <div className="flex items-center justify-center mb-2">
                         <FaMapMarkerAlt
                           className="text-danger me-2"
                           size={14}
@@ -232,9 +326,9 @@ const AllResApi = () => {
                       </div>
                     )}
 
-                    {/* Resturant Phone */}
+                    {/* Restaurant Phone */}
                     {restaurant.phone && (
-                      <div className="d-flex align-items-center justify-content-center">
+                      <div className="flex items-center justify-center">
                         <FaPhone className="text-primary me-2" size={14} />
                         <small
                           className="text-muted"
@@ -246,7 +340,7 @@ const AllResApi = () => {
                     )}
                   </div>
 
-                  {/* resturant description */}
+                  {/* restaurant description */}
                   {restaurant.description && (
                     <p
                       className="text-muted small mb-3"
@@ -265,11 +359,11 @@ const AllResApi = () => {
                 </div>
 
                 {/* order now btn and favorite btn */}
-                <div className="card-footer bg-transparent border-0 pt-0">
-                  <div className="d-flex justify-content-between align-items-center gap-2">
+                <div className="card-footer bg-transparent border-0 pt-0 !px-3">
+                  <div className="flex justify-center items-center gap-2">
                     <Link
                       href={`/pages/allResturants/${restaurant.id}`}
-                      className="btn btn-warning flex-grow-1 fw-bold"
+                      className="btn py-2 px-1.5 bg-amber-600 text-white rounded-2xl flex-grow-1 fw-bold"
                       style={{ fontSize: "14px" }}
                     >
                       أطلب الآن
@@ -289,7 +383,7 @@ const AllResApi = () => {
         )}
       </div>
 
-      {/* التنسيقات الإضافية */}
+      {/* additinal styles */}
       <style jsx>{`
         .AllResApi {
           background: #fff;

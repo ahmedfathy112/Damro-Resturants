@@ -16,11 +16,14 @@ import {
   Filter,
   Eye,
   Package,
-  Truck,
+  Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { supabase } from "../../lib/supabaseClient";
+import { useAuth } from "../../context/Authcontext";
+import Swal from "sweetalert2";
 
-// Component للإحصائيات السريعة
+// for current stats
 const StatsCard = ({ title, value, icon: Icon, color = "blue" }) => {
   const colorClasses = {
     blue: "bg-blue-50 text-blue-600 border-blue-200",
@@ -44,28 +47,149 @@ const StatsCard = ({ title, value, icon: Icon, color = "blue" }) => {
   );
 };
 
-// Component للطلبات الحالية
+// to show the current order
 const CurrentOrders = () => {
-  const currentOrders = [
-    {
-      id: "ORD-001",
-      restaurant: "مطعم الشام",
-      items: ["برجر دجاج", "بطاطس مقلية", "كوكا كولا"],
-      total: 45.5,
-      status: "preparing",
-      estimatedTime: "25 دقيقة",
-      orderTime: "12:30 ص",
-    },
-    {
-      id: "ORD-002",
-      restaurant: "بيتزا إيطاليا",
-      items: ["بيتزا مارجريتا كبيرة", "عصير برتقال"],
-      total: 62.0,
-      status: "confirmed",
-      estimatedTime: "35 دقيقة",
-      orderTime: "1:15 ص",
-    },
-  ];
+  const { userId } = useAuth();
+  const [currentOrders, setCurrentOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [deletingOrderId, setDeletingOrderId] = useState(null);
+
+  useEffect(() => {
+    const fetchCurrentOrders = async () => {
+      if (!userId) return;
+
+      try {
+        setLoading(true);
+
+        const { data, error } = await supabase
+          .from("orders")
+          .select(
+            `
+          id, 
+          user_id, 
+          restaurant_id, 
+          status, 
+          total_amount, 
+          created_at,
+          order_items (
+            id,
+            quantity,
+            menu_items (
+              name,
+              price
+            )
+          )
+        `
+          )
+          .eq("user_id", userId)
+          .in("status", ["pending", "confirmed", "preparing", "ready"])
+          .order("created_at", { ascending: false })
+          .limit(3);
+
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          const formattedOrders = await Promise.all(
+            data.map(async (order) => {
+              let restaurantName = "مطعم غير معروف";
+              try {
+                const { data: restaurantData } = await supabase
+                  .from("restaurants")
+                  .select("name")
+                  .eq("id", order.restaurant_id)
+                  .single();
+
+                if (restaurantData) {
+                  restaurantName = restaurantData.name;
+                }
+              } catch (err) {
+                console.error("Error fetching restaurant:", err);
+              }
+
+              let estimatedTime = "30 دقيقة";
+              if (order.status === "preparing") {
+                estimatedTime = "25 دقيقة";
+              } else if (order.status === "confirmed") {
+                estimatedTime = "35 دقيقة";
+              }
+
+              const orderItems = order.order_items.map((item) => {
+                return `${item.menu_items.name} (${item.quantity}) - ${
+                  item.menu_items.price * item.quantity
+                } جنية`;
+              });
+
+              return {
+                id: order.id,
+                restaurant: restaurantName,
+                items: orderItems,
+                total: order.total_amount,
+                status: order.status,
+                estimatedTime: estimatedTime,
+                orderTime: new Date(order.created_at).toLocaleTimeString(
+                  "ar-EG",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }
+                ),
+              };
+            })
+          );
+
+          setCurrentOrders(formattedOrders);
+        }
+      } catch (err) {
+        setError(err.message);
+        console.error("Error fetching current orders:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCurrentOrders();
+  }, [userId]);
+
+  const deleteOrder = async (orderId) => {
+    console.log(orderId);
+    if (!userId || !orderId) return;
+
+    try {
+      setDeletingOrderId(orderId);
+      const { error: itemsError } = await supabase
+        .from("order_items")
+        .delete()
+        .eq("order_id", orderId);
+
+      if (itemsError) {
+        throw itemsError;
+      }
+
+      const { error: orderError } = await supabase
+        .from("orders")
+        .delete()
+        .eq("id", orderId)
+        .eq("user_id", userId);
+
+      if (orderError) {
+        throw orderError;
+      }
+
+      setCurrentOrders((prevOrders) =>
+        prevOrders.filter((order) => order.id !== orderId)
+      );
+
+      await Swal.fire("تم الحذف!", "تم حذف الطلب بنجاح", "success");
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      await Swal.fire("خطأ!", "حدث خطأ أثناء حذف الطلب", "error");
+    } finally {
+      setDeletingOrderId(null);
+    }
+  };
 
   const getStatusInfo = (status) => {
     const statusMap = {
@@ -103,6 +227,26 @@ const CurrentOrders = () => {
     return statusMap[status] || statusMap.pending;
   };
 
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <div className="flex items-center justify-center h-64">
+          <p>جاري تحميل الطلبات...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-red-500">حدث خطأ: {error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
@@ -113,114 +257,280 @@ const CurrentOrders = () => {
       </div>
 
       <div className="space-y-4">
-        {currentOrders.map((order) => {
-          const statusInfo = getStatusInfo(order.status);
-          const StatusIcon = statusInfo.icon;
+        {currentOrders.length === 0 ? (
+          <div className="text-center py-8">
+            <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">لا توجد طلبات حالية</p>
+          </div>
+        ) : (
+          currentOrders.map((order) => {
+            const statusInfo = getStatusInfo(order.status);
+            const StatusIcon = statusInfo.icon;
 
-          return (
-            <div
-              key={order.id}
-              className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-medium text-gray-900">
-                      {order.restaurant}
-                    </h3>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}
-                    >
-                      <StatusIcon className="w-3 h-3 mr-1" />
-                      {statusInfo.text}
-                    </span>
-                  </div>
-
-                  <div className="text-sm text-gray-600 mb-2">
-                    <p className="mb-1">رقم الطلب: {order.id}</p>
-                    <p className="mb-1">وقت الطلب: {order.orderTime}</p>
-                    <p>الوقت المتوقع: {order.estimatedTime}</p>
-                  </div>
-
-                  <div className="text-sm text-gray-500">
-                    {order.items.join(" • ")}
-                  </div>
-                </div>
-
-                <div className="text-left">
-                  <p className="text-lg font-semibold text-gray-900">
-                    {order.total.toFixed(2)} ر.س
-                  </p>
-                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium mt-2 flex items-center gap-1">
-                    <Eye className="w-4 h-4" />
-                    عرض التفاصيل
+            return (
+              <div
+                key={order.id}
+                className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors relative"
+              >
+                {/* delete order btn */}
+                {order.status === "pending" && (
+                  <button
+                    onClick={() => deleteOrder(order.id)}
+                    disabled={deletingOrderId === order.id}
+                    className="absolute bottom-3 left-3 p-2 !text-2xl text-red-500 hover:text-red-700 disabled:opacity-50"
+                    title="حذف الطلب"
+                  >
+                    {deletingOrderId === order.id ? (
+                      <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Trash2 className="!text-2xl w-4 h-4" />
+                    )}
                   </button>
+                )}
+
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="font-medium text-gray-900">
+                        {order.restaurant}
+                      </h3>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}
+                      >
+                        <StatusIcon className="w-3 h-3 mr-1" />
+                        {statusInfo.text}
+                      </span>
+                    </div>
+
+                    <div className="text-sm text-gray-600 mb-2">
+                      <p className="mb-1">رقم الطلب: {order.id}</p>
+                      <p className="mb-1">وقت الطلب: {order.orderTime}</p>
+                      <p>الوقت المتوقع: {order.estimatedTime}</p>
+                    </div>
+
+                    <div className="text-sm text-gray-500">
+                      {order.items.join(" • ")}
+                    </div>
+                  </div>
+
+                  <div className="text-left">
+                    <p className="text-lg font-semibold text-gray-900">
+                      {order.total.toFixed(2)} ج.م
+                    </p>
+                    <button className="text-blue-600 hover:text-blue-800 text-sm font-medium mt-2 flex items-center gap-1">
+                      <Eye className="w-4 h-4" />
+                      عرض التفاصيل
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
     </div>
   );
 };
 
-// Component لسجل الطلبات السابقة
+// for all orders of the user
 const OrderHistory = () => {
+  const { userId } = useAuth();
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [deletingOrderId, setDeletingOrderId] = useState(null);
 
-  const orderHistory = [
-    {
-      id: "ORD-098",
-      restaurant: "كنتاكي",
-      items: ["وجبة زنجر", "كول سلو", "بيبسي"],
-      total: 38.75,
-      status: "delivered",
-      date: "2025-01-10",
-      rating: 5,
-    },
-    {
-      id: "ORD-097",
-      restaurant: "مطعم المحيط",
-      items: ["سمك مشوي", "أرز بسمتي", "سلطة"],
-      total: 55.2,
-      status: "delivered",
-      date: "2025-01-08",
-      rating: 4,
-    },
-    {
-      id: "ORD-096",
-      restaurant: "بيتزا هت",
-      items: ["بيتزا سوبر سوبريم وسط"],
-      total: 42.0,
-      status: "cancelled",
-      date: "2025-01-05",
-      rating: null,
-    },
-  ];
+  useEffect(() => {
+    const fetchOrderHistory = async () => {
+      if (!userId) return;
+
+      try {
+        setLoading(true);
+
+        let query = supabase
+          .from("orders")
+          .select(
+            `
+            id, 
+            user_id, 
+            restaurant_id, 
+            status, 
+            total_amount, 
+            created_at,
+            order_items (
+              id,
+              quantity,
+              menu_items (
+                name,
+                price
+              )
+            )
+          `
+          )
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false });
+
+        if (activeTab !== "all") {
+          query = query.eq("status", activeTab);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          const formattedOrders = await Promise.all(
+            data.map(async (order) => {
+              let restaurantName = "مطعم غير معروف";
+              try {
+                const { data: restaurantData } = await supabase
+                  .from("restaurants")
+                  .select("name")
+                  .eq("id", order.restaurant_id)
+                  .single();
+
+                if (restaurantData) {
+                  restaurantName = restaurantData.name;
+                }
+              } catch (err) {
+                console.error("Error fetching restaurant:", err);
+              }
+
+              let orderItems = [];
+              if (order.order_items && order.order_items.length > 0) {
+                orderItems = order.order_items.map((item) => {
+                  return `${item.quantity}x ${
+                    item.menu_items?.name || "عنصر غير معروف"
+                  }`;
+                });
+              } else {
+                orderItems = ["عناصر الطلب غير متاحة"];
+              }
+
+              return {
+                id: order.id,
+                restaurant: restaurantName,
+                items: orderItems,
+                total: order.total_amount,
+                status: order.status,
+                date: new Date(order.created_at).toLocaleDateString("ar-EG"),
+                rating: order.rating || null,
+              };
+            })
+          );
+
+          setOrders(formattedOrders);
+        }
+      } catch (err) {
+        setError(err.message);
+        console.error("Error fetching order history:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrderHistory();
+  }, [userId, activeTab]);
+
+  const handleDeleteOrder = async (orderId) => {
+    if (!userId || !orderId) return;
+
+    // confirm the delete
+    const result = await Swal.fire({
+      title: "هل أنت متأكد؟",
+      text: "لا يمكن التراجع عن هذه العملية!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "نعم، احذف!",
+      cancelButtonText: "إلغاء",
+      reverseButtons: true,
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      setDeletingOrderId(orderId);
+
+      // حذف العناصر أولاً ثم الطلب
+      const { error: itemsError } = await supabase
+        .from("order_items")
+        .delete()
+        .eq("order_id", orderId);
+
+      if (itemsError) throw itemsError;
+
+      const { error: orderError } = await supabase
+        .from("orders")
+        .delete()
+        .eq("id", orderId)
+        .eq("user_id", userId);
+
+      if (orderError) throw orderError;
+
+      // تحديث الواجهة بإزالة الطلب المحذوف
+      setOrders((prevOrders) =>
+        prevOrders.filter((order) => order.id !== orderId)
+      );
+
+      await Swal.fire("تم الحذف!", "تم حذف الطلب بنجاح", "success");
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      await Swal.fire("خطأ!", "حدث خطأ أثناء حذف الطلب", "error");
+    } finally {
+      setDeletingOrderId(null);
+    }
+  };
 
   const tabs = [
-    { id: "all", label: "جميع الطلبات", count: orderHistory.length },
+    { id: "all", label: "جميع الطلبات", count: orders.length },
     {
       id: "delivered",
       label: "مكتملة",
-      count: orderHistory.filter((o) => o.status === "delivered").length,
+      count: orders.filter((o) => o.status === "delivered").length,
     },
     {
       id: "cancelled",
       label: "ملغية",
-      count: orderHistory.filter((o) => o.status === "cancelled").length,
+      count: orders.filter((o) => o.status === "cancelled").length,
     },
   ];
 
-  const filteredOrders = orderHistory.filter((order) => {
-    const matchesTab = activeTab === "all" || order.status === activeTab;
+  const filteredOrders = orders.filter((order) => {
     const matchesSearch =
       order.restaurant.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.id.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesTab && matchesSearch;
+    return matchesSearch;
   });
+
+  const reorder = (orderId) => {
+    console.log("إعادة الطلب:", orderId);
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <div className="flex items-center justify-center h-64">
+          <p>جاري تحميل سجل الطلبات...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-red-500">حدث خطأ: {error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
@@ -234,7 +544,7 @@ const OrderHistory = () => {
               placeholder="البحث في الطلبات..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             />
           </div>
           <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
@@ -262,81 +572,169 @@ const OrderHistory = () => {
 
       {/* Orders List */}
       <div className="space-y-3">
-        {filteredOrders.map((order) => (
-          <div
-            key={order.id}
-            className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="font-medium text-gray-900">
-                    {order.restaurant}
-                  </h3>
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      order.status === "delivered"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {order.status === "delivered" ? "مكتمل" : "ملغي"}
-                  </span>
-                </div>
+        {filteredOrders.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-600">لا توجد طلبات في سجل الطلبات</p>
+          </div>
+        ) : (
+          filteredOrders.map((order) => (
+            <div
+              key={order.id}
+              className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-medium text-gray-900">
+                      {order.restaurant}
+                    </h3>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        order.status === "delivered"
+                          ? "bg-green-100 text-green-800"
+                          : order.status === "cancelled"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {order.status === "delivered"
+                        ? "مكتمل"
+                        : order.status === "cancelled"
+                        ? "ملغي"
+                        : order.status}
+                    </span>
+                  </div>
 
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-gray-600">رقم الطلب: {order.id}</p>
-                  <p className="text-sm text-gray-500">{order.date}</p>
-                </div>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm text-gray-600">
+                      رقم الطلب: {order.id}
+                    </p>
+                    <p className="text-sm text-gray-500">{order.date}</p>
+                  </div>
 
-                <p className="text-sm text-gray-500 mb-2">
-                  {order.items.join(" • ")}
-                </p>
-
-                <div className="flex items-center justify-between">
-                  <p className="text-lg font-semibold text-gray-900">
-                    {order.total.toFixed(2)} ر.س
+                  <p className="text-sm text-gray-500 mb-2">
+                    {order.items.join(" • ")}
                   </p>
-                  <div className="flex items-center gap-2">
-                    {order.rating && (
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${
-                              i < order.rating
-                                ? "text-yellow-400 fill-current"
-                                : "text-gray-300"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    )}
-                    <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                      إعادة الطلب
-                    </button>
+
+                  <div className="flex items-center justify-between">
+                    <p className="text-lg font-semibold text-gray-900">
+                      {order.total.toFixed(2)} ج.م
+                    </p>
+                    <div className="flex items-center gap-2">
+                      {order.rating && (
+                        <div className="flex items-center gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-4 h-4 ${
+                                i < order.rating
+                                  ? "text-yellow-400 fill-current"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      )}
+                      <button
+                        onClick={() => handleDeleteOrder(order.id)}
+                        disabled={deletingOrderId === order.id}
+                        className="text-red-600 hover:text-red-800 cursor-pointer p-1 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="حذف الطلب"
+                      >
+                        {deletingOrderId === order.id ? (
+                          <div className="w-4 h-4 border-t-2 border-red-600 border-solid rounded-full animate-spin"></div>
+                        ) : (
+                          <Trash2 className="w-4 h-4 !text-4xl" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
 };
-
-// Component لمعلومات الملف الشخصي
+// for personal user info
 const ProfileInfo = () => {
-  const userProfile = {
-    name: "أحمد محمد",
-    email: "ahmed.mohamed@email.com",
-    phone: "+966501234567",
-    address: "شارع الملك فهد، الرياض، المملكة العربية السعودية",
-    joinDate: "يناير 2024",
-    totalOrders: 47,
-    favoriteRestaurants: ["مطعم الشام", "كنتاكي", "بيتزا إيطاليا"],
-  };
+  const { userId } = useAuth();
+  const [userProfile, setUserProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!userId) return;
+
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("app_users")
+          .select("full_name, phone, address, created_at, email")
+          .eq("id", userId)
+          .single();
+
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          setUserProfile({
+            name: data.full_name,
+            email: data.email,
+            phone: data.phone,
+            address: data.address,
+            joinDate: new Date(data.created_at).toLocaleDateString("ar-EG", {
+              year: "numeric",
+              month: "long",
+            }),
+            totalOrders: 47,
+            favoriteRestaurants: ["مطعم الشام", "كنتاكي", "بيتزا إيطاليا"],
+          });
+        }
+      } catch (err) {
+        setError(err.message);
+        console.error("Error fetching user profile:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [userId]);
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <div className="flex items-center justify-center h-64">
+          <p>جاري تحميل البيانات...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-red-500">حدث خطأ: {error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userProfile) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <div className="flex items-center justify-center h-64">
+          <p>لا توجد بيانات للعرض</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
@@ -371,18 +769,6 @@ const ProfileInfo = () => {
               <p className="font-medium text-gray-900">{userProfile.phone}</p>
             </div>
           </div>
-
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gray-100 rounded-lg">
-              <ShoppingBag className="w-4 h-4 text-gray-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">إجمالي الطلبات</p>
-              <p className="font-medium text-gray-900">
-                {userProfile.totalOrders} طلب
-              </p>
-            </div>
-          </div>
         </div>
 
         <div className="flex items-start gap-3">
@@ -394,138 +780,117 @@ const ProfileInfo = () => {
             <p className="font-medium text-gray-900">{userProfile.address}</p>
           </div>
         </div>
-
-        <div>
-          <p className="text-sm font-medium text-gray-900 mb-2">
-            المطاعم المفضلة
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {userProfile.favoriteRestaurants.map((restaurant, index) => (
-              <span
-                key={index}
-                className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
-              >
-                {restaurant}
-              </span>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );
 };
 
-// Component للإعدادات والتفضيلات
-const SettingsPanel = () => {
-  const [notifications, setNotifications] = useState({
-    orderUpdates: true,
-    promotions: false,
-    newsletter: true,
-  });
-
-  const [paymentMethods] = useState([
-    { id: 1, type: "card", last4: "1234", brand: "Visa", isDefault: true },
-    {
-      id: 2,
-      type: "card",
-      last4: "5678",
-      brand: "Mastercard",
-      isDefault: false,
-    },
-  ]);
-
-  return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-gray-900 mb-6">
-        الإعدادات والتفضيلات
-      </h2>
-
-      <div className="space-y-6">
-        {/* إعدادات الإشعارات */}
-        <div>
-          <h3 className="text-md font-medium text-gray-900 mb-3 flex items-center gap-2">
-            <Bell className="w-4 h-4" />
-            إعدادات الإشعارات
-          </h3>
-          <div className="space-y-3">
-            {Object.entries(notifications).map(([key, value]) => {
-              const labels = {
-                orderUpdates: "تحديثات الطلبات",
-                promotions: "العروض والخصومات",
-                newsletter: "النشرة الإخبارية",
-              };
-
-              return (
-                <label key={key} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">{labels[key]}</span>
-                  <input
-                    type="checkbox"
-                    checked={value}
-                    onChange={(e) =>
-                      setNotifications((prev) => ({
-                        ...prev,
-                        [key]: e.target.checked,
-                      }))
-                    }
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                </label>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* طرق الدفع */}
-        <div>
-          <h3 className="text-md font-medium text-gray-900 mb-3 flex items-center gap-2">
-            <CreditCard className="w-4 h-4" />
-            طرق الدفع
-          </h3>
-          <div className="space-y-2">
-            {paymentMethods.map((method) => (
-              <div
-                key={method.id}
-                className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
-              >
-                <div className="flex items-center gap-3">
-                  <CreditCard className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {method.brand} •••• {method.last4}
-                    </p>
-                    {method.isDefault && (
-                      <span className="text-xs text-green-600">
-                        البطاقة الافتراضية
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <button className="text-blue-600 hover:text-blue-800 text-sm">
-                  تعديل
-                </button>
-              </div>
-            ))}
-            <button className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-800 transition-colors">
-              + إضافة بطاقة جديدة
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// المكون الرئيسي للـ Dashboard
+// user dashboard
 const UserDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
+  const router = useRouter();
+  const { isCustomer, isAuthenticated } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!isAuthenticated || !isCustomer) {
+      router.push("/");
+    }
+  }, [isAuthenticated, isCustomer, router]);
 
   const menuItems = [
     { id: "overview", label: "نظرة عامة", icon: ShoppingBag },
-    { id: "current", label: "الطلبات الحالية", icon: Clock },
     { id: "history", label: "سجل الطلبات", icon: Package },
     { id: "profile", label: "الملف الشخصي", icon: User },
-    { id: "settings", label: "الإعدادات", icon: Settings },
   ];
+  const { userId } = useAuth();
+  const [stats, setStats] = useState({
+    totalOrders: 0,
+    totalSpent: 0,
+    pendingOrders: 0,
+    completedOrders: 0,
+  });
+
+  useEffect(() => {
+    const fetchUserStats = async () => {
+      if (!userId) return;
+
+      try {
+        setLoading(true);
+
+        // get all user orders
+        const { data: ordersData, error: ordersError } = await supabase
+          .from("orders")
+          .select("id, total_amount, status")
+          .eq("user_id", userId);
+
+        if (ordersError) {
+          throw ordersError;
+        }
+
+        if (ordersData) {
+          // calculate the stats
+          const totalOrders = ordersData.length;
+          const totalSpent = ordersData.reduce(
+            (sum, order) => sum + order.total_amount,
+            0
+          );
+          const pendingOrders = ordersData.filter((order) =>
+            ["pending", "confirmed", "preparing", "ready"].includes(
+              order.status
+            )
+          ).length;
+          const completedOrders = ordersData.filter(
+            (order) => order.status === "delivered"
+          ).length;
+
+          setStats({
+            totalOrders,
+            totalSpent,
+            pendingOrders,
+            completedOrders,
+          });
+        }
+      } catch (err) {
+        setError(err.message);
+        console.error("Error fetching user stats:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserStats();
+  }, [userId]);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm animate-pulse"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="h-4 bg-gray-200 rounded w-20 mb-2"></div>
+                <div className="h-8 bg-gray-200 rounded w-16"></div>
+              </div>
+              <div className="h-10 w-10 bg-gray-200 rounded-lg"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <p className="text-red-600">حدث خطأ في تحميل الإحصائيات: {error}</p>
+      </div>
+    );
+  }
 
   const renderContent = () => {
     switch (activeSection) {
@@ -534,28 +899,22 @@ const UserDashboard = () => {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <StatsCard
-                title="الطلبات الحالية"
-                value="2"
+                title="طلباتي"
+                value={stats.pendingOrders}
                 icon={Clock}
                 color="orange"
               />
               <StatsCard
-                title="الطلبات المكتملة"
-                value="47"
-                icon={CheckCircle}
-                color="green"
+                title="طلبات مكتملة"
+                value={stats.completedOrders}
+                icon={Package}
+                color="purple"
               />
               <StatsCard
                 title="إجمالي المبلغ"
-                value="1,247 ر.س"
+                value={`${stats.totalSpent.toFixed(2)} ج.م`}
                 icon={CreditCard}
                 color="blue"
-              />
-              <StatsCard
-                title="المطاعم المفضلة"
-                value="3"
-                icon={Star}
-                color="red"
               />
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -564,32 +923,18 @@ const UserDashboard = () => {
             </div>
           </div>
         );
-      case "current":
-        return <CurrentOrders />;
       case "history":
         return <OrderHistory />;
       case "profile":
         return <ProfileInfo />;
-      case "settings":
-        return <SettingsPanel />;
       default:
         return null;
     }
   };
-  const router = useRouter();
 
-  // check if the user is a customer
-  useEffect(() => {
-    const checkUserType = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!(await isCustomer(user.id))) {
-        router.push("/");
-      }
-    };
-    checkUserType();
-  }, []);
+  if (!isAuthenticated || !isCustomer) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">

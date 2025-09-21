@@ -49,26 +49,26 @@ const OverviewTab = ({ restaurantId }) => {
 
         if (ordersError) throw ordersError;
 
-        // جلب التقييمات
+        // جلب التقييمات - استعلام معدل
         const { data: reviewsData, error: reviewsError } = await supabase
           .from("reviews")
-          .select("rating, created_at, comment, app_users(full_name)")
+          .select(
+            `
+          id,
+          rating,
+          comment,
+          created_at,
+          user_id,
+          app_users (
+            full_name
+          )
+        `
+          )
           .eq("restaurant_id", restaurantId)
           .order("created_at", { ascending: false })
           .limit(5);
 
         if (reviewsError) throw reviewsError;
-
-        // جلب الإشعارات (يمكنك تعديل هذا حسب نظام الإشعارات الخاص بك)
-        const { data: notificationsData, error: notificationsError } =
-          await supabase
-            .from("notifications")
-            .select("*")
-            .eq("restaurant_id", restaurantId)
-            .order("created_at", { ascending: false })
-            .limit(5);
-
-        if (notificationsError) throw notificationsError;
 
         // حساب الإحصائيات
         const todayOrders = ordersData?.length || 0;
@@ -105,7 +105,7 @@ const OverviewTab = ({ restaurantId }) => {
           todayOrders,
           newOrders,
           todayRevenue,
-          monthlyRevenue: todayRevenue * 30, // تقدير إيرادات الشهر
+          monthlyRevenue: todayRevenue * 30,
           averageRating: parseFloat(averageRating),
           totalReviews: ratings.length,
           preparingOrders,
@@ -117,7 +117,7 @@ const OverviewTab = ({ restaurantId }) => {
         const formattedOrders =
           ordersData?.slice(0, 5).map((order) => ({
             id: order.id.substring(0, 8),
-            customer: "عميل", // يمكنك جلب اسم العميل من جدول users
+            customer: "عميل",
             time: new Date(order.created_at).toLocaleTimeString("ar-EG"),
             amount: order.total_amount,
             status: getOrderStatusText(order.status),
@@ -125,7 +125,7 @@ const OverviewTab = ({ restaurantId }) => {
 
         setRecentOrders(formattedOrders);
 
-        // تحضير بيانات التقييمات كإشعارات
+        // تحضير بيانات التقييمات - معالجة البيانات بشكل صحيح
         const reviewNotifications =
           reviewsData?.map((review) => ({
             id: review.id,
@@ -147,7 +147,7 @@ const OverviewTab = ({ restaurantId }) => {
     fetchOverviewData();
   }, [restaurantId]);
 
-  // دالة لتحويل حالة الطلب إلى نص عربي
+  // translate order status to Arabic
   const getOrderStatusText = (status) => {
     const statusMap = {
       pending: "جديد",
@@ -180,7 +180,7 @@ const OverviewTab = ({ restaurantId }) => {
 
   return (
     <div className="space-y-6">
-      {/* الإحصائيات الرئيسية */}
+      {/* main stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard
           icon={ShoppingCart}
@@ -206,7 +206,7 @@ const OverviewTab = ({ restaurantId }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* أحدث الطلبات */}
+        {/* newest order */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-800">
@@ -263,7 +263,7 @@ const OverviewTab = ({ restaurantId }) => {
           </div>
         </div>
 
-        {/* أداء اليوم */}
+        {/* performance of today */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
             أداء اليوم
@@ -309,7 +309,7 @@ const OverviewTab = ({ restaurantId }) => {
         </div>
       </div>
 
-      {/* أحدث التقييمات */}
+      {/* newest review */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">
           أحدث التقييمات
