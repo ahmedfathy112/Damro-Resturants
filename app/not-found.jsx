@@ -1,5 +1,6 @@
 import Link from "next/link";
 import React from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 const PageNotFound = () => {
   return (
@@ -8,10 +9,10 @@ const PageNotFound = () => {
         <h1 className="display-4 text-danger mb-3">404</h1>
         <h3 className="mb-3">Page Not Found</h3>
         <p className="text-muted mb-4">
-          The page you are looking for doesn’t exist or has been moved.
+          الصفحه اللي بتدور عليها مش موجوده ارجع تاني للصفحه الرئيسيه
         </p>
         <Link href="/" className="btn btn-primary">
-          Back To Home
+          العوده الي الصفحه الرئيسيه
         </Link>
       </div>
     </main>
