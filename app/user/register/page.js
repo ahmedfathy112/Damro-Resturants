@@ -135,6 +135,8 @@ const RegisterPage = () => {
         password: formData.password,
         options: {
           data: userMetadata,
+          emailRedirectTo:
+            "https://damro-resturants.vercel.app/user/verifyEmail",
         },
       });
 

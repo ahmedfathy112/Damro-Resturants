@@ -144,11 +144,11 @@ const RecentDishesSection = () => {
             <p className="text-gray-500">لا توجد أطباق مضافة حديثاً</p>
           </div>
         ) : (
-          <div className="flex flex-wrap justify-center lg:justify-end gap-6">
+          <div className="flex flex-wrap justify-center max-md:flex-col lg:justify-end gap-6">
             {recentDishes.map((dish) => (
               <div
                 key={dish.id}
-                className="relative w-[250px] cursor-pointer hover:transform hover:scale-105 transition-all duration-300 max-md:w-[45%]"
+                className="relative w-[250px] cursor-pointer hover:transform hover:scale-105 transition-all duration-300 max-md:w-[100%] max-md:!h-[360px]"
                 style={{
                   height: "306px",
                   borderRadius: "12px",
@@ -162,7 +162,7 @@ const RecentDishesSection = () => {
                   }}
                 >
                   <div
-                    className="relative overflow-hidden w-full h-[213px] max-md:h-[190px]"
+                    className="relative overflow-hidden w-full h-[213px] max-md:h-[260px]"
                     style={{
                       borderTopLeftRadius: "12px",
                       borderTopRightRadius: "12px",
@@ -393,7 +393,7 @@ const RecentRestaurantsSection = () => {
   }
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 bg-white w-full">
       <div className="container mx-auto px-4">
         <div className="w-full flex justify-between flex-row-reverse mb-12">
           <h2
@@ -422,7 +422,7 @@ const RecentRestaurantsSection = () => {
           </div>
         ) : (
           // main content
-          <div className="restaurant-slider-container">
+          <div className="restaurant-slider-container" dir="ltr">
             <Swiper
               modules={[Navigation, Pagination]}
               spaceBetween={20}
@@ -556,6 +556,7 @@ const RecentRestaurantsSection = () => {
           @media (max-width: 768px) {
             .restaurant-slider-container {
               padding: 0 10px;
+              direction: ltr;
             }
           }
         `}</style>
@@ -565,43 +566,6 @@ const RecentRestaurantsSection = () => {
 };
 
 const Home = () => {
-  const BestResturant = [
-    {
-      id: 1,
-      name: "مطعم زنجر",
-
-      image: "/Images/category.png", // سيتم إضافة رابط الصورة هنا
-      bgColor: "#FFF3CD",
-    },
-    {
-      id: 2,
-      name: "لقمة هنية",
-
-      image: "/Images/category.png", // سيتم إضافة رابط الصورة هنا
-      bgColor: "#E8F5E8",
-    },
-    {
-      id: 3,
-      name: "وصاية",
-
-      image: "/Images/category.png", // سيتم إضافة رابط الصورة هنا
-      bgColor: "#FFE5CC",
-    },
-    {
-      id: 4,
-      name: "مطعم ميكس",
-
-      image: "/Images/category.png", // سيتم إضافة رابط الصورة هنا
-      bgColor: "#FFE0E0",
-    },
-    {
-      id: 5,
-      name: "مطعم هرفي",
-
-      image: "/Images/category.png", // سيتم إضافة رابط الصورة هنا
-      bgColor: "#E0F0FF",
-    },
-  ];
   return (
     <>
       <main className=" h-screen px-[20px]">

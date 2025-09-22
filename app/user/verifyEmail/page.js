@@ -25,10 +25,9 @@ const VerifyEmailPage = () => {
       }
 
       try {
-        // التحقق من البريد الإلكتروني باستخدام Supabase
         const { data, error } = await supabase.auth.verifyOtp({
           token_hash: token,
-          type: type || "signup", // يمكن أن يكون 'signup' أو 'email'
+          type: type || "signup",
         });
 
         if (error) {
@@ -46,7 +45,6 @@ const VerifyEmailPage = () => {
           setVerificationStatus("success");
           setMessage("تم تفعيل بريدك الإلكتروني بنجاح!");
 
-          // تحديث حالة التفعيل في الجدول المناسب
           await updateVerificationStatus(data.user.id);
         }
       } catch (error) {
@@ -60,7 +58,6 @@ const VerifyEmailPage = () => {
 
     const updateVerificationStatus = async (userId) => {
       try {
-        // التحقق من نوع المستخدم وتحديث حالة التفعيل
         const { data: restaurantData } = await supabase
           .from("restaurants")
           .select("id")

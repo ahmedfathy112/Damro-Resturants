@@ -185,8 +185,8 @@ const AllResApi = () => {
 
       {/* Search Bar */}
       <div className="row !mb-10 !px-4">
-        <div className="w-full flex flex-row justify-between !mx-auto">
-          <h3 className="!text-2xl ">مطاعمنا</h3>
+        <div className="w-full flex flex-row justify-between !mx-auto max-md:flex-col max-md:justify-center max-md:items-center">
+          <h3 className="!text-2xl max-md:mb-4">مطاعمنا</h3>
           <div
             className="flex items-center px-3 py-2 rounded"
             style={{ border: "1px solid #ccc", backgroundColor: "#fff" }}
@@ -232,7 +232,7 @@ const AllResApi = () => {
           filteredRestaurants.map((restaurant) => (
             <div
               key={restaurant.id}
-              className="w-1/4 flex flex-col justify-center items-center mb-4 px-2"
+              className="w-1/4 flex flex-col justify-center items-center mb-4 px-2 max-md:w-[90%] max-md:gap-5 max-md:mb-10"
             >
               <div
                 className="card w-full text-center !h-100 !position-relative"
