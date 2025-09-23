@@ -566,6 +566,25 @@ const RecentRestaurantsSection = () => {
 };
 
 const Home = () => {
+  const [loading, setLoading] = useState(true);
+
+  // make a loading for 3 sec every time the user back to home page
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="w-12 h-12 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
+        <p className="ml-4 text-lg font-semibold text-gray-700"></p>
+      </div>
+    );
+  }
   return (
     <>
       <main className=" h-screen px-[20px]">
@@ -609,7 +628,7 @@ const Home = () => {
           {/* Background woman image - Desktop */}
           <div className="absolute left-0 top-0 z-10 hidden lg:block">
             <Image
-              src="/Images/HeroSec2.png"
+              src="/images/HeroSec2.png"
               alt="Hero Section Background"
               width={805}
               height={537}
@@ -620,7 +639,7 @@ const Home = () => {
           {/* Background woman image - Mobile/Tablet */}
           <div className="absolute left-0 top-0 z-10 lg:hidden opacity-30">
             <Image
-              src="/Images/HeroSec2.png"
+              src="/images/HeroSec2.png"
               alt="Hero Section Background"
               width={400}
               height={300}
@@ -652,7 +671,7 @@ const Home = () => {
                 {/* Desktop Image */}
                 <div className="hidden lg:block">
                   <Image
-                    src="/Images/HeroSec1.png"
+                    src="/images/HeroSec1.png"
                     alt="امرأة تحمل البيتزا"
                     width={565}
                     height={641}
@@ -663,7 +682,7 @@ const Home = () => {
                 {/* Mobile/Tablet Image */}
                 <div className="lg:hidden">
                   <Image
-                    src="/Images/HeroSec1.png"
+                    src="/images/HeroSec1.png"
                     alt="امرأة تحمل البيتزا"
                     width={300}
                     height={350}
@@ -694,7 +713,7 @@ const Home = () => {
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
                   <Image
-                    src="/Images/PartnerWith.png"
+                    src="/images/PartnerWith.png"
                     alt="خلفية شراكة الأعمال"
                     fill
                     className="object-cover"
@@ -741,7 +760,7 @@ const Home = () => {
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
                   <Image
-                    src="/Images/RideWith.png"
+                    src="/images/RideWith.png"
                     alt="خلفية شراكة السائقين"
                     fill
                     className="object-cover"

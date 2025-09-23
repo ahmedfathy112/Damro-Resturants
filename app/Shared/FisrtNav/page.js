@@ -199,7 +199,7 @@ const CartPopup = ({
                   {/* Product Image */}
                   <div className="w-16 h-16 flex-shrink-0">
                     <Image
-                      src={item.image_url || "/Images/CartProduct.png"}
+                      src={item.image_url || "/images/CartProduct.png"}
                       alt={item.name}
                       width={64}
                       height={64}

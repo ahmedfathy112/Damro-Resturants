@@ -577,7 +577,7 @@ const RegisterPage = () => {
             }}
           >
             <img
-              src="/Images/register.png"
+              src="/images/register.png"
               alt="تسجيل جديد"
               className="img-fluid mb-4"
               style={{ maxHeight: "240px" }}

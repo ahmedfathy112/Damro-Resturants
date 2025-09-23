@@ -159,7 +159,7 @@ const ResturentDatails = ({ restaurantId }) => {
             />
           ) : (
             <img
-              src="/Images/ResDeHome.png"
+              src="/images/ResDeHome.png"
               alt="صورة تفاصيل المطعم"
               className="img-fluid rounded"
               style={{ width: "200px", height: "200px", objectFit: "cover" }}

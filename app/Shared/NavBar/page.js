@@ -4,6 +4,7 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
 import { useAuth } from "../../context/Authcontext";
+import logo from "../../../public/images/logo.png";
 
 const NavBar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -38,13 +39,13 @@ const NavBar = () => {
     <>
       <header className="bg-[#FFF] w-full flex justify-between items-center !py-3 !px-5 mt-[20px] relative">
         {/* Logo */}
-        <Link href={`/`} className="flex-shrink-0">
+        <Link href={`/`} className="flex-shrink-0 w-[130px]">
           <Image
-            src="/Images/logo.png"
+            src="/images/logo.png"
             alt="logo icon"
             width={215}
             height={53}
-            className="w-auto h-10 sm:h-12 lg:h-[53px] max-w-[150px] sm:max-w-[180px] lg:max-w-[215px]"
+            className="w-full !h-auto sm:h-12 lg:h-[53px] max-w-[150px] sm:max-w-[180px] lg:max-w-[215px]"
           />
         </Link>
 
