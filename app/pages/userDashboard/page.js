@@ -17,6 +17,7 @@ import {
   Eye,
   Package,
   Trash2,
+  Menu,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
@@ -508,10 +509,6 @@ const OrderHistory = () => {
     return matchesSearch;
   });
 
-  const reorder = (orderId) => {
-    console.log("إعادة الطلب:", orderId);
-  };
-
   if (loading) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
@@ -533,8 +530,8 @@ const OrderHistory = () => {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm max-md:w-full max-md:p-1">
+      <div className="flex items-center justify-between mb-6 max-md:flex-col">
         <h2 className="text-lg font-semibold text-gray-900">سجل الطلبات</h2>
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -580,7 +577,7 @@ const OrderHistory = () => {
           filteredOrders.map((order) => (
             <div
               key={order.id}
-              className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+              className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors max-md:w-full max-md:p-6"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -792,12 +789,18 @@ const UserDashboard = () => {
   const { isCustomer, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
 
+  // to check if he is user or not 
   useEffect(() => {
-    if (!isAuthenticated || !isCustomer) {
-      router.push("/");
+    if (!isCustomer) {
+      const timer = setTimeout(() => {
+        router.push("/");
+      }, 3000);
+
+      return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, isCustomer, router]);
+  }, [isCustomer, router]);
 
   const menuItems = [
     { id: "overview", label: "نظرة عامة", icon: ShoppingBag },
@@ -939,8 +942,8 @@ const UserDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
       <div className="flex">
-        {/* Sidebar */}
-        <div className="w-64 bg-white shadow-sm border-l border-gray-200 min-h-screen">
+        {/* Sidebar in Desktop */}
+        <div className="w-64 bg-white shadow-sm border-l border-gray-200 min-h-screen hidden md:block">
           <div className="p-6">
             <h1 className="text-xl font-bold text-gray-900">لوحة التحكم</h1>
             <p className="text-sm text-gray-600 mt-1">مرحباً أحمد محمد</p>
@@ -955,7 +958,7 @@ const UserDashboard = () => {
                   onClick={() => setActiveSection(item.id)}
                   className={`w-full flex items-center gap-3 px-6 py-3 text-right hover:bg-gray-50 transition-colors ${
                     activeSection === item.id
-                      ? "bg-blue-50 text-blue-700 border-l-3 border-blue-700"
+                      ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
                       : "text-gray-700"
                   }`}
                 >
@@ -967,8 +970,62 @@ const UserDashboard = () => {
           </nav>
         </div>
 
+        {/* Mobile Menu Button */}
+        <button
+          className="md:hidden p-4 text-2xl fixed top-4"
+          onClick={() => setIsMobile(!isMobile)}
+        >
+          <Menu />
+        </button>
+
+        {/* Sidebar in Mobile */}
+        {isMobile && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-40 z-40"
+            onClick={() => setIsMobile(false)}
+          >
+            <div
+              className="absolute right-0 top-0 w-64 bg-white shadow-sm border-l border-gray-200 min-h-screen z-50"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 flex justify-between items-center">
+                <h1 className="text-xl font-bold text-gray-900">لوحة التحكم</h1>
+                <button
+                  onClick={() => setIsMobile(false)}
+                  className="text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <nav className="mt-6">
+                {menuItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveSection(item.id);
+                        setIsMobile(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-6 py-3 text-right hover:bg-gray-50 transition-colors ${
+                        activeSection === item.id
+                          ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
+                          : "text-gray-700"
+                      }`}
+                    >
+                      <Icon className="w-5 h-5" />
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          </div>
+        )}
+
         {/* Main Content */}
-        <div className="flex-1 p-8">{renderContent()}</div>
+        <div className="flex-1 p-8 max-md:p-1">{renderContent()}</div>
       </div>
     </div>
   );

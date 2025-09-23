@@ -39,15 +39,16 @@ const RestaurantDashboard = () => {
 
   const router = useRouter();
 
-  // check if the user is a customer
+  // check if the user is a restarant
   useEffect(() => {
-    const checkUserType = async () => {
-      if (!Isresturant) {
+    if (!Isresturant) {
+      const timer = setTimeout(() => {
         router.push("/");
-      }
-    };
-    checkUserType();
-  }, []);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [Isresturant, router]);
 
   return (
     <div className="min-h-screen bg-gray-50 pr-4 flex flex-row" dir="rtl">

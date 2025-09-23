@@ -128,20 +128,20 @@ const NavBar = () => {
         {/* Mobile Nav Links */}
         <nav className="flex flex-col p-5 space-y-2">
           {navLinks.map((link, index) => (
-            <a
+            <Link
               key={index}
               href={link.href}
               className="cursor-pointer nav-link decoration-none rounded-[100px] !py-3 !px-4 text-center !text-[#000] text-[16px] font-semibold hover:!bg-orange-400 hover:!text-white transition-all duration-300"
               onClick={toggleMobileMenu}
             >
               {link.name}
-            </a>
+            </Link>
           ))}
         </nav>
 
         {/* Mobile Login/Signup Button */}
         {isAuthenticated ? (
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-col">
             <h1 className="!text-lg !font-bold !text-gray-800">
               Welcome,
               <span className="!text-blue-600">{userName?.slice(0, 10)}..</span>

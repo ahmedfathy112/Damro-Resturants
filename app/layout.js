@@ -1,11 +1,11 @@
 import { Poppins } from "next/font/google";
-
 import "./globals.css";
 import FirstNav from "./Shared/FisrtNav/page";
 import NavBar from "./Shared/NavBar/page";
 import { AuthProvider } from "../app/context/Authcontext";
 import { CartProvider } from "../app/context/CartContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import LoaderWrapper from "./components/LoaderWrapper"; // هنا استدعيت الملف
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -25,13 +25,15 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${poppins.className} antialiased`}>
-        <AuthProvider>
-          <CartProvider>
-            <FirstNav />
-            <NavBar />
-            {children}
-          </CartProvider>
-        </AuthProvider>
+        <LoaderWrapper>
+          <AuthProvider>
+            <CartProvider>
+              <FirstNav />
+              <NavBar />
+              {children}
+            </CartProvider>
+          </AuthProvider>
+        </LoaderWrapper>
       </body>
     </html>
   );
