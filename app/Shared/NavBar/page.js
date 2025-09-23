@@ -4,7 +4,6 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
 import { useAuth } from "../../context/Authcontext";
-import logo from "../../../public/images/logo.png";
 
 const NavBar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

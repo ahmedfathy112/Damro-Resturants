@@ -16,6 +16,9 @@ const poppins = Poppins({
 export const metadata = {
   title: "Damro Resturant",
   description: "Damro Resturant Menu",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({ children }) {
