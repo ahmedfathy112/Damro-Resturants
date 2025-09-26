@@ -3,3 +3,15 @@
 .nav-link {
   text-decoration: none;
 }
+.aboutUs-btn {
+  position: relative;
+  transition: 0.5s ease-in-out;
+}
+
+.aboutUs-btn:hover {
+  background-color: orange;
+  border: none !important ;
+}
+.lastSec-about {
+  justify-content: space-between !important;
+}
