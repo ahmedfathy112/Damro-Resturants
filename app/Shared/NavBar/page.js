@@ -27,7 +27,7 @@ const NavBar = () => {
     { name: "الصفحة الرئيسية", href: "/" },
     { name: "المطاعم", href: "/pages/allResturants" },
     { name: "عن الشركة", href: "#" },
-    { name: "تواصل معنا", href: "#" },
+    { name: "تواصل معنا", href: "/pages/contactUs" },
   ];
 
   if (isAuthenticated) {
