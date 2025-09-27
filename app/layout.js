@@ -5,7 +5,7 @@ import NavBar from "./Shared/NavBar/page";
 import { AuthProvider } from "../app/context/Authcontext";
 import { CartProvider } from "../app/context/CartContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import LoaderWrapper from "./components/LoaderWrapper"; // هنا استدعيت الملف
+import LoaderWrapper from "./components/LoaderWrapper";
 
 const poppins = Poppins({
   subsets: ["latin"],

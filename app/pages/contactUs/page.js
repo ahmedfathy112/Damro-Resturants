@@ -67,35 +67,38 @@ const ContactUs = () => {
           </div>
           {/* contact info content */}
           <div className="w-full flex flex-col text-white">
+            {/* Phone */}
             <div className="w-full flex flex-row mb-3 justify-center">
               <PhoneCall className="text-2xl my-auto" />
-              <span className="text-[18px] font-medium mr-2">
+              <span className="text-[18px] font-medium mr-2 max-md:text-[14px]">
                 +201060733679
               </span>
             </div>
+            {/* Email */}
             <div className="w-full flex flex-row mb-3 justify-center">
               <Mail className="text-2xl my-auto" />
-              <span className="text-[18px] font-medium mr-2">
+              <span className="text-[18px] font-medium mr-2 max-md:text-[14px]">
                 ahmedfathy241110@gmail.com
               </span>
             </div>
+            {/* Address */}
             <div className="w-full flex flex-row mb-3 justify-center">
               <MapPin className="text-2xl my-auto" />
-              <span className="text-[18px] font-medium mr-2">
+              <span className="text-[18px] font-medium mr-2 max-md:text-[14px]">
                 Gharbia Governorate - El Mahalla El Kubra
               </span>
             </div>
           </div>
         </div>
         {/* contact form */}
-        <div className="w-1/2 py-3 px-4 mr-4 max-md:w-full max-md:mr-0">
+        <div className="w-1/2 py-3 px-4 mr-4 max-md:w-full max-md:mr-0 max-md:mt-6">
           <form
             ref={formRef}
             onSubmit={sendEmail}
             className="flex flex-col w-full text-right"
           >
             {/* full name */}
-            <div className="flex flex-col w-full mb-4">
+            <div className="flex flex-col w-full mb-4 max-md:mb-6">
               <label
                 title="أدخل أسمك بالكامل"
                 className="font-medium text-[17px] text-gray-400 mb-2 text-right"
@@ -112,7 +115,7 @@ const ContactUs = () => {
             </div>
 
             {/* email */}
-            <div className="flex flex-col w-full mb-4">
+            <div className="flex flex-col w-full mb-4 max-md:mb-6">
               <label
                 title="أدخل بريدك الالكتروني"
                 className="font-medium text-[17px] text-gray-400 mb-2 text-right"
@@ -129,7 +132,7 @@ const ContactUs = () => {
             </div>
 
             {/* message content */}
-            <div className="flex flex-col w-full mb-4">
+            <div className="flex flex-col w-full mb-4 max-md:mb-6">
               <label
                 title="أدخل رسالتك"
                 className="font-medium text-[17px] text-gray-400 mb-2 text-right"
@@ -145,6 +148,7 @@ const ContactUs = () => {
               />
             </div>
 
+            {/* send message btn */}
             <button
               type="submit"
               disabled={isSubmitting}

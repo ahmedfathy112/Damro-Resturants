@@ -10,8 +10,14 @@ import Swal from "sweetalert2";
 
 const FirstNav = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const { userAddress, resturantAddress, isCustomer, Isresturant, userId } =
-    useAuth();
+  const {
+    userAddress,
+    resturantAddress,
+    isCustomer,
+    Isresturant,
+    userId,
+    isAuthenticated,
+  } = useAuth();
   const {
     cart,
     updateQuantity,
@@ -89,8 +95,8 @@ const FirstNav = () => {
   const totalItems = getTotalItems();
   const totalPrice = getCartTotal();
 
-  // if there`s no items in he cart
-  if (Isresturant || totalItems === 0) {
+  // if the user is resturant or is not auth the cart won`t be visible
+  if (Isresturant || !isAuthenticated) {
     return (
       <div className="!bg-[#FAFAFA] rounded-b-[12px] w-full flex justify-between cursor-pointer !px-7 max-md:flex-col max-md:!mt-5">
         <div className="flex flex-row gap-3 items-center !py-3 !pl-[10px] max-md:!py-3">
@@ -105,44 +111,46 @@ const FirstNav = () => {
 
   return (
     <>
-      <div className="!bg-[#FAFAFA] rounded-b-[12px] w-full flex justify-between cursor-pointer !px-7 max-md:flex-col max-md:!mt-5">
-        {/* Address */}
-        <div className="flex flex-row gap-3 items-center !py-3 !pl-[10px] max-md:!py-3">
-          <MdAddLocationAlt size={30} color="#000 mr-3" />
-          <p className="text-xl !text-[#000]">
-            {isCustomer ? userAddress : resturantAddress}
-          </p>
-        </div>
+      <div className="bg-[#FAFAFA] relative h-[50px] rounded-b-[12px] w-full flex justify-between cursor-pointer !px-7 max-md:flex-col max-md:!mt-5">
+        <div className="w-full bg-[#FAFAFA] flex justify-between fixed z-[999] px-4 top-0 max-md:flex-col left-0 max-md:justify-center">
+          {/* Address */}
+          <div className="flex flex-row gap-3 items-center !py-3 !pl-[10px] max-md:!py-3">
+            <MdAddLocationAlt size={30} color="#000 mr-3" />
+            <p className="text-xl !text-[#000]">
+              {isCustomer ? userAddress : resturantAddress}
+            </p>
+          </div>
 
-        {/*  */}
-        <div
-          className="flex flex-row items-center !bg-[#028643] rounded-b-[12px] !px-6 !py-5 hover:!bg-[#026838] transition-colors"
-          onClick={() => setIsCartOpen(true)}
-        >
-          <div className="border-r-[1px] text-[26px] font-bold text-[#ffffff] px-[8px]">
-            <FaShoppingCart />
+          {/* Cart popup */}
+          <div
+            className="flex flex-row items-center !bg-[#028643] rounded-b-[12px] !px-6 !py-5 hover:!bg-[#026838] transition-colors"
+            onClick={() => setIsCartOpen(true)}
+          >
+            <div className="border-r-[1px] text-[26px] font-bold text-[#ffffff] px-[8px]">
+              <FaShoppingCart />
+            </div>
+            <div className="border-r-[1px] text-[16px] font-bold text-[#ffffff] px-[8px]">
+              {totalItems} عنصر
+            </div>
+            <div className="border-r-[1px] text-[16px] font-bold text-[#ffffff] px-[8px]">
+              £{totalPrice.toFixed(2)}
+            </div>
+            <div className="text-[26px] font-bold text-[#ffffff] px-[8px]">
+              <FaArrowAltCircleDown />
+            </div>
           </div>
-          <div className="border-r-[1px] text-[16px] font-bold text-[#ffffff] px-[8px]">
-            {totalItems} عنصر
-          </div>
-          <div className="border-r-[1px] text-[16px] font-bold text-[#ffffff] px-[8px]">
-            £{totalPrice.toFixed(2)}
-          </div>
-          <div className="text-[26px] font-bold text-[#ffffff] px-[8px]">
-            <FaArrowAltCircleDown />
-          </div>
+
+          <CartPopup
+            isOpen={isCartOpen}
+            onClose={() => setIsCartOpen(false)}
+            cartItems={cart}
+            updateQuantity={updateQuantity}
+            removeFromCart={removeFromCart}
+            total={totalPrice}
+            onCreateOrder={createOrder}
+          />
         </div>
       </div>
-
-      <CartPopup
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        cartItems={cart}
-        updateQuantity={updateQuantity}
-        removeFromCart={removeFromCart}
-        total={totalPrice}
-        onCreateOrder={createOrder}
-      />
     </>
   );
 };

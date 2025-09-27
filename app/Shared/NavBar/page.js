@@ -26,7 +26,7 @@ const NavBar = () => {
   const navLinks = [
     { name: "الصفحة الرئيسية", href: "/" },
     { name: "المطاعم", href: "/pages/allResturants" },
-    { name: "عن الشركة", href: "#" },
+    { name: "تعرف علينا", href: "/pages/aboutUs" },
     { name: "تواصل معنا", href: "/pages/contactUs" },
   ];
 
@@ -111,7 +111,7 @@ const NavBar = () => {
         {/* Mobile Menu Header */}
         <div className="flex items-center justify-between p-5 border-b border-gray-200">
           <Image
-            src="/Images/logo.png"
+            src="/images/logo.png"
             alt="logo icon"
             width={150}
             height={37}
@@ -164,25 +164,6 @@ const NavBar = () => {
           </div>
         )}
       </div>
-
-      {/* Tablet Menu (md screens) - Simplified version */}
-      {/* {isAuthenticated ? (
-        <h1 className="!text-lg !font-bold !text-gray-800">
-          Welcome,
-          <span className="!text-blue-600">{userName?.slice(0, 10)}..</span>
-        </h1>
-      ) : (
-        <div className="md:hidden sm:block bg-[#FFF] w-full px-5 py-2">
-          <div className="flex justify-center">
-            <Link
-              href="/user/login"
-              className="cursor-pointer nav-link rounded-[100px] !text-white !bg-[#03081f] min-w-[200px] !py-[8px] text-center !px-[5px] text-[14px] hover:!bg-[#05102a] transition-colors duration-300"
-            >
-              تسجيل/انشاء حساب
-            </Link>
-          </div>
-        </div>
-      )} */}
     </>
   );
 };
