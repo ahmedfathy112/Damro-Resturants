@@ -6,7 +6,6 @@ import { AuthProvider } from "../app/context/Authcontext";
 import { CartProvider } from "../app/context/CartContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import LoaderWrapper from "./components/LoaderWrapper";
-
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
@@ -24,7 +23,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${poppins.className} antialiased`}>
+      <body className={`${poppins.className} antialiased `}>
         <LoaderWrapper>
           <AuthProvider>
             <CartProvider>

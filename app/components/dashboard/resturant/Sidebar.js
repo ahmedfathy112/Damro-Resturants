@@ -25,7 +25,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
   return (
     <>
       <button
-        className="md:hidden fixed top-4 right-0 z-50 bg-white shadow p-2 rounded-md"
+        className="md:hidden fixed top-[280px] right-0 z-50 bg-white shadow p-2 rounded-md"
         onClick={() => setIsOpen(true)}
       >
         <Menu size={24} />
