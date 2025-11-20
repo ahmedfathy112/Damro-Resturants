@@ -6,6 +6,8 @@ import { AuthProvider } from "../app/context/Authcontext";
 import { CartProvider } from "../app/context/CartContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import LoaderWrapper from "./components/LoaderWrapper";
+import { Analytics } from "@vercel/analytics/next";
+
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
@@ -31,6 +33,7 @@ export default function RootLayout({ children }) {
               <NavBar />
               {children}
               <SpeedInsights />
+              <Analytics />
             </CartProvider>
           </AuthProvider>
         </LoaderWrapper>
