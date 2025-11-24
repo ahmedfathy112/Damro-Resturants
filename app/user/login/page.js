@@ -26,6 +26,7 @@ const LoginPages = () => {
         title: "Oops...",
         text: "Please enter email and password",
       });
+      setLoading(false);
       return;
     }
     try {
@@ -40,6 +41,8 @@ const LoginPages = () => {
           title: "Oops...",
           text: "حدث خطا ما أثناء تسجيل الدخول من فضلك حاول مره أخري لاحقا!",
         });
+        setLoading(false);
+        return;
       }
 
       // set the token to the localStorage and redirect to home page
@@ -50,17 +53,52 @@ const LoginPages = () => {
         );
         console.log(response.data.session.access_token);
         router.push("/");
+      } else {
+        setLoading(false);
       }
-
-      setLoading(false);
-      // Redirect to home page
-      router.push("/");
     } catch (error) {
       console.log(error);
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "حدث خطا ما أثناء تسجيل الدخول من فضلك حاول مره أخري لاحقا!",
+        });
+        setError(error.message);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "حدث خطا ما أثناء تسجيل الدخول من فضلك حاول مره أخري لاحقا!",
+      });
+      setLoading(false);
     }
   };
   return (
     <div className="login">
+      <h3 className=" font-bold text-center mt-4 !text-white py-3 px-4 !text-[18px] bg-black">
+        {" "}
+        ملحوظه : تسجيل الدخول او إنشاء الحساب بأستخدام جوجل هو متاح للعملاء فقط
+        وليس للمطاعم نرجو من المطاعم ان يقومو بإنشاء حساب لهم من صفحة إنشاء
+        الحساب{" "}
+      </h3>
       {/* Login Form + Social Login */}
       <div className="container py-5 vh-100 d-flex align-items-center justify-content-center">
         <div className="row w-100 align-items-center">
@@ -135,7 +173,12 @@ const LoginPages = () => {
           {/* Right Side - Social Login */}
           <div className="col-lg-5 col-md-6 col-12 d-flex flex-column gap-3 mt-2">
             <p className="text-center d-lg-none">Or continue with</p>
-            <button className="btn btn-outline-dark d-flex align-items-center gap-2 justify-content-center">
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="btn btn-outline-dark d-flex align-items-center gap-2 justify-content-center"
+            >
               <FcGoogle size={22} /> Continue with Google
             </button>
             <button className="btn btn-outline-primary d-flex align-items-center gap-2 justify-content-center">

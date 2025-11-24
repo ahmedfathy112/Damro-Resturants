@@ -7,6 +7,7 @@ import React, {
   useCallback,
 } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 const AuthContext = createContext({
   isAuthenticated: false,
@@ -48,6 +49,8 @@ export const AuthProvider = ({ children }) => {
   const [resturantAddress, setResturantAddress] = useState(null);
   const [userAddress, setUserAddress] = useState(null);
 
+  const router = useRouter();
+
   const fetchUserFromSupabase = useCallback(async (userId) => {
     if (!userId) return null;
     try {
@@ -68,18 +71,43 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const logout = () => {
-    localStorage.removeItem("access_token");
-    window.location.reload();
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn("Supabase signOut error:", err);
+    }
+
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+    }
+
+    // Redirect to login page
+    try {
+      window.location.href = "/user/login";
+    } catch (e) {
+      window.location.reload();
+    }
   };
 
   const refreshUser = useCallback(async () => {
     setLoading(true);
     try {
-      const token =
+      let token =
         typeof window !== "undefined"
           ? localStorage.getItem("access_token")
           : null;
+
+      // If no token in localStorage, check Supabase session (from OAuth)
+      if (!token && typeof window !== "undefined") {
+        const { data } = await supabase.auth.getSession();
+        if (data.session?.access_token) {
+          token = data.session.access_token;
+          localStorage.setItem("access_token", token);
+        }
+      }
+
       if (!token) {
         setIsAuthenticated(false);
         setIsCustomer(false);
@@ -118,7 +146,28 @@ export const AuthProvider = ({ children }) => {
       const fullNameRaw =
         decoded.user_metadata?.full_name || decoded.full_name || null;
 
-      const fullName = fullNameRaw ? fixEncoding(fullNameRaw) : null;
+      let fullName = fullNameRaw ? fixEncoding(fullNameRaw) : null;
+
+      // Fallback: if fullName is not in JWT, try Supabase auth user metadata
+      if (!fullName && typeof window !== "undefined") {
+        try {
+          const { data: authUser } = await supabase.auth.getUser();
+          if (authUser?.user) {
+            const metaName =
+              authUser.user.user_metadata?.full_name ||
+              authUser.user.user_metadata?.name ||
+              authUser.user.email?.split("@")[0];
+            fullName = metaName ? fixEncoding(metaName) : null;
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      // Last resort: use email prefix
+      if (!fullName && decoded.email) {
+        fullName = decoded.email.split("@")[0];
+      }
       // get the address of the resturant if exists
       const addressRaw =
         decoded.user_metadata?.restaurant_address || decoded.address || null;
@@ -157,10 +206,33 @@ export const AuthProvider = ({ children }) => {
     if (typeof window !== "undefined") {
       window.addEventListener("storage", handleStorage);
     }
+
+    // Subscribe to Supabase auth state changes for seamless OAuth integration
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        // Sync auth state changes with localStorage
+        if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+          if (session?.access_token) {
+            localStorage.setItem("access_token", session.access_token);
+            if (session.refresh_token) {
+              localStorage.setItem("refresh_token", session.refresh_token);
+            }
+          }
+        } else if (event === "SIGNED_OUT") {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+        }
+        // Refresh UI state
+        await refreshUser();
+      }
+    );
+
     return () => {
       if (typeof window !== "undefined") {
         window.removeEventListener("storage", handleStorage);
       }
+      // Unsubscribe from auth state changes
+      authListener?.unsubscribe?.();
     };
   }, [refreshUser]);
 
