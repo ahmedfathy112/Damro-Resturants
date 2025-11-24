@@ -4,6 +4,7 @@ import { FaArrowAltCircleDown, FaShoppingCart, FaTimes } from "react-icons/fa";
 import { MdAddLocationAlt } from "react-icons/md";
 import Image from "next/image";
 import { useAuth } from "../../context/Authcontext";
+import { useRouter } from "next/navigation";
 import { useCart } from "../../context/CartContext";
 import { supabase } from "../../lib/supabaseClient";
 import Swal from "sweetalert2";
@@ -17,7 +18,10 @@ const FirstNav = () => {
     Isresturant,
     userId,
     isAuthenticated,
+    user,
   } = useAuth();
+
+  const router = useRouter();
   const {
     cart,
     updateQuantity,
@@ -45,6 +49,25 @@ const FirstNav = () => {
           title: "Oops...",
           text: "يرجي التسجيل اولا",
         });
+        return;
+      }
+
+      // Ensure user has phone and address before placing an order
+      const phone = user?.phone || null;
+      const address = user?.address || userAddress || null;
+
+      if (!phone || !address) {
+        const result = await Swal.fire({
+          icon: "warning",
+          title: "الرجاء إكمال الملف الشخصي",
+          text: "يجب إضافة رقم الهاتف والعنوان قبل تأكيد الطلب.",
+          showCancelButton: true,
+          confirmButtonText: "اذهب للملفي",
+          cancelButtonText: "لاحقًا",
+        });
+        if (result.isConfirmed) {
+          router.push("/pages/userDashboard/");
+        }
         return;
       }
 

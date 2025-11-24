@@ -73,21 +73,39 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
+      // Step 1: Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      if (error && error.status !== 404) {
+        // Ignore 404 errors (user already signed out)
+        console.warn("Supabase signOut error:", error);
+      }
     } catch (err) {
       console.warn("Supabase signOut error:", err);
     }
 
+    // Step 2: Clear all local storage tokens
     if (typeof window !== "undefined") {
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
+      sessionStorage.clear();
     }
 
-    // Redirect to login page
-    try {
-      window.location.href = "/user/login";
-    } catch (e) {
-      window.location.reload();
+    // Step 3: Clear React state by calling refreshUser (will detect no token and clear state)
+    setIsAuthenticated(false);
+    setIsCustomer(false);
+    setUserId(null);
+    setUserName(null);
+    setUser(null);
+    setResturant(false);
+
+    // Step 4: Redirect to login page
+    if (typeof window !== "undefined") {
+      try {
+        window.location.href = "/user/login";
+        window.location.reload();
+      } catch (e) {
+        window.location.reload();
+      }
     }
   };
 

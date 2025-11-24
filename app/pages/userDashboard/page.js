@@ -661,6 +661,9 @@ const ProfileInfo = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({ phone: "", address: "" });
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -691,6 +694,10 @@ const ProfileInfo = () => {
             totalOrders: 47,
             favoriteRestaurants: ["مطعم الشام", "كنتاكي", "بيتزا إيطاليا"],
           });
+          setFormData({
+            phone: data.phone || "",
+            address: data.address || "",
+          });
         }
       } catch (err) {
         setError(err.message);
@@ -702,6 +709,56 @@ const ProfileInfo = () => {
 
     fetchUserProfile();
   }, [userId]);
+
+  const handleSaveProfile = async () => {
+    if (!formData.phone.trim() || !formData.address.trim()) {
+      Swal.fire({
+        icon: "warning",
+        title: "حقول مطلوبة",
+        text: "يرجى ملء رقم الهاتف والعنوان",
+      });
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      const { error } = await supabase
+        .from("app_users")
+        .update({
+          phone: formData.phone,
+          address: formData.address,
+        })
+        .eq("id", userId);
+
+      if (error) {
+        throw error;
+      }
+
+      setUserProfile({
+        ...userProfile,
+        phone: formData.phone,
+        address: formData.address,
+      });
+
+      setIsEditing(false);
+      Swal.fire({
+        icon: "success",
+        title: "تم الحفظ",
+        text: "تم تحديث بيانات ملفك الشخصي بنجاح",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+    } catch (err) {
+      console.error("Error saving profile:", err);
+      Swal.fire({
+        icon: "error",
+        title: "خطأ",
+        text: "حدث خطأ أثناء حفظ البيانات",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -737,9 +794,12 @@ const ProfileInfo = () => {
     <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold text-gray-900">الملف الشخصي</h2>
-        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1">
+        <button
+          onClick={() => setIsEditing(!isEditing)}
+          className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+        >
           <Settings className="w-4 h-4" />
-          تعديل
+          {isEditing ? "إلغاء" : "تعديل"}
         </button>
       </div>
 
@@ -756,27 +816,83 @@ const ProfileInfo = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gray-100 rounded-lg">
-              <Phone className="w-4 h-4 text-gray-600" />
-            </div>
+        {isEditing ? (
+          <div className="space-y-4 pt-4 border-t border-gray-200">
             <div>
-              <p className="text-sm text-gray-500">رقم الهاتف</p>
-              <p className="font-medium text-gray-900">{userProfile.phone}</p>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                رقم الهاتف *
+              </label>
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
+                placeholder="أدخل رقم هاتفك"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                العنوان *
+              </label>
+              <textarea
+                value={formData.address}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
+                placeholder="أدخل عنوانك"
+                rows="3"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button
+                onClick={handleSaveProfile}
+                disabled={isSaving}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg disabled:opacity-50 transition-colors"
+              >
+                {isSaving ? "جاري الحفظ..." : "حفظ التغييرات"}
+              </button>
+              <button
+                onClick={() => setIsEditing(false)}
+                className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                إلغاء
+              </button>
             </div>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gray-100 rounded-lg">
+                  <Phone className="w-4 h-4 text-gray-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">رقم الهاتف</p>
+                  <p className="font-medium text-gray-900">
+                    {userProfile.phone || "لم يتم إضافة رقم هاتف"}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-gray-100 rounded-lg">
-            <MapPin className="w-4 h-4 text-gray-600" />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">العنوان</p>
-            <p className="font-medium text-gray-900">{userProfile.address}</p>
-          </div>
-        </div>
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-gray-100 rounded-lg">
+                <MapPin className="w-4 h-4 text-gray-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">العنوان</p>
+                <p className="font-medium text-gray-900">
+                  {userProfile.address || "لم يتم إضافة عنوان"}
+                </p>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -791,7 +907,7 @@ const UserDashboard = () => {
   const [error, setError] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
 
-  // to check if he is user or not 
+  // to check if he is user or not
   useEffect(() => {
     if (!isCustomer) {
       const timer = setTimeout(() => {
