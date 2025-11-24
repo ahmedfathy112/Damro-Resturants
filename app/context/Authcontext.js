@@ -181,8 +181,21 @@ export const AuthProvider = ({ children }) => {
 
       setIsAuthenticated(Boolean(token));
       setUserId(sub);
-      setIsCustomer(userType === "customer");
-      setResturant(userType === "restaurant");
+
+      // If this session came from Google OAuth, treat the user as a customer
+      const provider =
+        decoded.app_metadata?.provider ||
+        decoded.user_metadata?.provider ||
+        null;
+
+      if (provider === "google") {
+        setIsCustomer(true);
+        setResturant(false);
+      } else {
+        setIsCustomer(userType === "customer");
+        setResturant(userType === "restaurant");
+      }
+
       setUserName(fullName || null);
 
       if (sub) {
