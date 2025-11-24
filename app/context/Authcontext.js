@@ -188,6 +188,17 @@ export const AuthProvider = ({ children }) => {
       if (sub) {
         const fetched = await fetchUserFromSupabase(sub);
         setUser(fetched);
+        // If the app_users row contains an explicit user_type, prefer it
+        if (fetched) {
+          if (fetched.user_type) {
+            setIsCustomer(fetched.user_type === "customer");
+            setResturant(fetched.user_type === "restaurant");
+          }
+          // Prefer the canonical name from the app_users table when available
+          if (fetched.full_name) {
+            setUserName(fetched.full_name);
+          }
+        }
       } else {
         setUser(null);
       }
