@@ -20,18 +20,32 @@ export default function OAuthSuccessPage() {
         const refreshToken =
           searchParams.get("refresh_token") || searchParams.get("refreshToken");
 
-        // Case A: Email confirmation (verify OTP)
+        // Case A: Email confirmation (verify via server-side endpoint)
         if (tokenHash && type) {
           try {
-            console.log("Verifying email token:", { tokenHash, type });
-            const { data, error: verifyError } = await supabase.auth.verifyOtp({
+            console.log("Posting token to server for verification:", {
+              tokenHash,
               type,
-              token: tokenHash,
+            });
+            const resp = await fetch("/api/auth/confirm", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ token_hash: tokenHash, type }),
             });
 
-            if (verifyError) {
-              console.error("Email confirmation failed:", verifyError);
-              setError("فشل تأكيد البريد الإلكتروني: " + verifyError.message);
+            let payload = null;
+            try {
+              payload = await resp.json();
+            } catch (e) {
+              payload = null;
+            }
+
+            if (!resp.ok) {
+              console.error("Server confirm failed:", payload);
+              setError(
+                "فشل تأكيد البريد الإلكتروني: " +
+                  (payload?.error?.message || JSON.stringify(payload))
+              );
               setTimeout(() => router.push("/user/login"), 3000);
               return;
             }
@@ -41,7 +55,7 @@ export default function OAuthSuccessPage() {
             window.location.replace("/user/login?confirmed=true");
             return;
           } catch (e) {
-            console.error("verifyOtp error:", e);
+            console.error("Server confirm error:", e);
             setError("حدث خطأ أثناء تأكيد البريد الإلكتروني");
             setTimeout(() => router.push("/user/login"), 3000);
             return;
