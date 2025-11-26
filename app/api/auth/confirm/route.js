@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "../../lib/supabaseServer"; // Using the Server Client initialized with Service Role Key
+import { supabaseServer } from "../../../lib/supabaseClient"; // Using the Server Client initialized with Service Role Key
 
 // This API route handles the token sent by the client-side page
 // to securely confirm the email using the Supabase Service Role Key.
