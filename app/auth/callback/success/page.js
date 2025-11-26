@@ -6,122 +6,227 @@ import { supabase } from "../../../lib/supabaseClient";
 export default function OAuthSuccessPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [success, setSuccess] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
     async function handleOAuthCallback() {
       try {
-        const tokenHash =
-          searchParams.get("token_hash") || searchParams.get("token");
+        setLoading(true);
+        const tokenHash = searchParams.get("token_hash");
         const type = searchParams.get("type");
-        const accessToken =
-          searchParams.get("access_token") || searchParams.get("accessToken");
-        const refreshToken =
-          searchParams.get("refresh_token") || searchParams.get("refreshToken");
+        const accessToken = searchParams.get("access_token");
+        const refreshToken = searchParams.get("refresh_token");
 
-        // Case A: Email confirmation (verify via server-side endpoint)
-        if (tokenHash && type) {
+        console.log("Auth callback parameters:", {
+          tokenHash: !!tokenHash,
+          type,
+          accessToken: !!accessToken,
+        });
+
+        // Case 1: Email confirmation flow
+        if (tokenHash && type === "signup") {
           try {
-            console.log("Posting token to server for verification:", {
-              tokenHash,
-              type,
-            });
             const resp = await fetch("/api/auth/confirm", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ token_hash: tokenHash, type }),
             });
 
-            let payload = null;
-            try {
-              payload = await resp.json();
-            } catch (e) {
-              payload = null;
-            }
+            const data = await resp.json();
 
             if (!resp.ok) {
-              console.error("Server confirm failed:", payload);
-              setError(
-                "فشل تأكيد البريد الإلكتروني: " +
-                  (payload?.error?.message || JSON.stringify(payload))
+              throw new Error(
+                data?.error?.message || "فشل في تأكيد البريد الإلكتروني"
               );
-              // setTimeout(() => router.push("/user/login"), 3000);
-              return;
             }
 
-            // success -> redirect to login with flag
+            setSuccess(true);
             setLoading(false);
-            window.location.replace("/user/login?confirmed=true");
+
+            // Redirect to login with success message after short delay
+            setTimeout(() => {
+              router.push("/user/login?confirmed=true");
+            }, 2000);
             return;
-          } catch (e) {
-            console.error("Server confirm error:", e);
-            setError("حدث خطأ أثناء تأكيد البريد الإلكتروني");
-            // setTimeout(() => router.push("/user/login"), 3000);
+          } catch (err) {
+            console.error("Email confirmation error:", err);
+            setError(err.message || "حدث خطأ غير متوقع");
+            setLoading(false);
             return;
           }
         }
 
-        // Case B: OAuth token flow
+        // Case 2: OAuth flow (social login)
         if (accessToken) {
-          // Store tokens in localStorage
           try {
-            localStorage.setItem("access_token", accessToken);
-            if (refreshToken)
-              localStorage.setItem("refresh_token", refreshToken);
-          } catch (e) {
-            console.warn("Failed to store tokens:", e);
-          }
+            // Store tokens securely
+            if (typeof window !== "undefined") {
+              localStorage.setItem("supabase.auth.token", accessToken);
+              if (refreshToken) {
+                localStorage.setItem(
+                  "supabase.auth.refreshToken",
+                  refreshToken
+                );
+              }
+            }
 
-          // Set Supabase session
-          try {
-            await supabase.auth.setSession({
+            // Set Supabase session
+            const { error: sessionError } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken || undefined,
             });
-          } catch (e) {
-            console.warn("Failed to set session:", e);
-          }
 
-          // Try to create app profile (non-blocking)
-          try {
-            const response = await fetch("/api/auth/create-profile", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ accessToken, refreshToken }),
-            });
+            if (sessionError) throw sessionError;
 
-            if (!response.ok) {
-              const errData = await response.json().catch(() => null);
-              console.warn("Profile creation warning:", errData);
-            } else {
-              const profileData = await response.json().catch(() => null);
-              console.log("Profile creation success:", profileData);
+            // Create user profile (non-blocking)
+            try {
+              await fetch("/api/auth/create-profile", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ accessToken, refreshToken }),
+              });
+            } catch (profileErr) {
+              console.warn("Profile creation warning:", profileErr);
+              // Continue even if profile creation fails
             }
-          } catch (profileError) {
-            console.warn("Profile creation error:", profileError);
-          }
 
-          // Clean up URL and redirect to home
-          setLoading(false);
-          window.location.replace("/");
-          return;
+            setSuccess(true);
+            setLoading(false);
+
+            // Redirect to dashboard/home
+            setTimeout(() => {
+              router.push("/dashboard");
+            }, 1500);
+            return;
+          } catch (err) {
+            console.error("OAuth session error:", err);
+            setError("فشل في إنشاء الجلسة، يرجى المحاولة مرة أخرى");
+            setLoading(false);
+            return;
+          }
         }
 
-        // Nothing matched
-        setError("No valid parameters received");
-        // setTimeout(() => router.push("/user/login"), 2000);
-      } catch (e) {
-        console.error("OAuth callback error:", e);
-        setError("Authentication failed");
-        // setTimeout(() => router.push("/user/login"), 3000);
+        // Case 3: No valid parameters found
+        setError("لم يتم العثور على بيانات مصادقة صالحة");
+        setLoading(false);
+      } catch (err) {
+        console.error("Unexpected auth error:", err);
+        setError("حدث خطأ غير متوقع أثناء المصادقة");
+        setLoading(false);
       }
     }
 
     handleOAuthCallback();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams, router]);
 
+  // Render loading state
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#f9fafb",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              width: "48px",
+              height: "48px",
+              border: "4px solid #e5e7eb",
+              borderTop: "4px solid #2563eb",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              margin: "0 auto 16px",
+            }}
+          ></div>
+          <h2
+            style={{
+              fontSize: "1.25rem",
+              fontWeight: "600",
+              color: "#1f2937",
+              marginBottom: "8px",
+            }}
+          >
+            جاري المعالجة
+          </h2>
+          <p style={{ color: "#6b7280" }}>جاري تأكيد حسابك، يرجى الانتظار...</p>
+          <style>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      </div>
+    );
+  }
+
+  // Render success state
+  if (success) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#f9fafb",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              width: "64px",
+              height: "64px",
+              backgroundColor: "#dcfce7",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 16px",
+            }}
+          >
+            <svg
+              style={{ width: "32px", height: "32px", color: "#16a34a" }}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M5 13l4 4L19 7"
+              ></path>
+            </svg>
+          </div>
+          <h2
+            style={{
+              fontSize: "1.5rem",
+              fontWeight: "bold",
+              color: "#16a34a",
+              marginBottom: "8px",
+            }}
+          >
+            تمت العملية بنجاح!
+          </h2>
+          <p style={{ color: "#6b7280", marginBottom: "16px" }}>
+            {searchParams.get("type") === "signup"
+              ? "تم تأكيد بريدك الإلكتروني بنجاح، جاري توجيهك إلى صفحة تسجيل الدخول..."
+              : "تم تسجيل الدخول بنجاح، جاري توجيهك إلى لوحة التحكم..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Render error state
   return (
     <div
       style={{
@@ -129,45 +234,87 @@ export default function OAuthSuccessPage() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#f5f5f5",
+        backgroundColor: "#f9fafb",
       }}
     >
-      <div style={{ textAlign: "center", fontFamily: "Arial, sans-serif" }}>
-        {error ? (
-          <div>
-            <h2 style={{ color: "#d32f2f", marginBottom: "10px" }}>
-              فشل تسجيل الدخول
-            </h2>
-            <p style={{ color: "#666", marginBottom: "10px" }}>{error}</p>
-            <p style={{ color: "#999", fontSize: "14px" }}>
-              التوجبة إلى صفحة تسجيل الدخول...
-            </p>
-          </div>
-        ) : (
-          <div>
-            <div
-              style={{
-                width: "40px",
-                height: "40px",
-                border: "4px solid #f3f3f3",
-                borderTop: "4px solid #03081f",
-                borderRadius: "50%",
-                animation: "spin 1s linear infinite",
-                margin: "0 auto 20px",
-              }}
-            ></div>
-            <h2 style={{ color: "#03081f", marginBottom: "10px" }}>
-              تسجيل الدخول ناجح
-            </h2>
-            <p style={{ color: "#666" }}>اعداد الحساب</p>
-            <style>{`
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-            `}</style>
-          </div>
-        )}
+      <div
+        style={{
+          textAlign: "center",
+          maxWidth: "28rem",
+          margin: "0 16px",
+        }}
+      >
+        <div
+          style={{
+            width: "64px",
+            height: "64px",
+            backgroundColor: "#fee2e2",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "0 auto 16px",
+          }}
+        >
+          <svg
+            style={{ width: "32px", height: "32px", color: "#dc2626" }}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M6 18L18 6M6 6l12 12"
+            ></path>
+          </svg>
+        </div>
+        <h2
+          style={{
+            fontSize: "1.5rem",
+            fontWeight: "bold",
+            color: "#dc2626",
+            marginBottom: "8px",
+          }}
+        >
+          فشل في المصادقة
+        </h2>
+        <p style={{ color: "#6b7280", marginBottom: "16px" }}>{error}</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              width: "100%",
+              backgroundColor: "#2563eb",
+              color: "white",
+              padding: "8px 16px",
+              borderRadius: "8px",
+              border: "none",
+              cursor: "pointer",
+            }}
+            onMouseOver={(e) => (e.target.style.backgroundColor = "#1d4ed8")}
+            onMouseOut={(e) => (e.target.style.backgroundColor = "#2563eb")}
+          >
+            إعادة المحاولة
+          </button>
+          <button
+            onClick={() => router.push("/user/login")}
+            style={{
+              width: "100%",
+              backgroundColor: "#e5e7eb",
+              color: "#374151",
+              padding: "8px 16px",
+              borderRadius: "8px",
+              border: "none",
+              cursor: "pointer",
+            }}
+            onMouseOver={(e) => (e.target.style.backgroundColor = "#d1d5db")}
+            onMouseOut={(e) => (e.target.style.backgroundColor = "#e5e7eb")}
+          >
+            العودة إلى تسجيل الدخول
+          </button>
+        </div>
       </div>
     </div>
   );
