@@ -12,62 +12,95 @@ export default function OAuthSuccessPage() {
   useEffect(() => {
     async function handleOAuthCallback() {
       try {
-        const accessToken = searchParams.get("access_token");
-        const refreshToken = searchParams.get("refresh_token");
+        // Handle two flows:
+        // 1) Email confirmation links from Supabase: ?token_hash=...&type=signup
+        // 2) OAuth callback tokens: ?access_token=...&refresh_token=...
 
-        if (!accessToken) {
-          setError("No access token received");
-          setTimeout(() => router.push("/user/login"), 2000);
+        const tokenHash = searchParams.get("token_hash");
+        const type = searchParams.get("type");
+        const accessToken =
+          searchParams.get("access_token") || searchParams.get("accessToken");
+        const refreshToken =
+          searchParams.get("refresh_token") || searchParams.get("refreshToken");
+
+        // Case A: Email confirmation (verify OTP)
+        if (tokenHash && type) {
+          try {
+            const { data, error } = await supabase.auth.verifyOtp({
+              type,
+              token: tokenHash,
+            });
+
+            if (error) {
+              console.error("Email confirmation failed:", error);
+              setError("فشل تأكيد البريد الإلكتروني");
+              setTimeout(() => router.push("/user/login"), 3000);
+              return;
+            }
+
+            // Confirmation success — redirect to login with a flag
+            setLoading(false);
+            // use replace so user can't go back to confirmation URL
+            window.location.replace("/user/login");
+            return;
+          } catch (e) {
+            console.error("verifyOtp error:", e);
+            setError("حدث خطأ أثناء تأكيد البريد الإلكتروني");
+            setTimeout(() => router.push("/user/login"), 3000);
+            return;
+          }
+        }
+
+        // Case B: OAuth token flow
+        if (accessToken) {
+          // Store tokens in localStorage
+          try {
+            localStorage.setItem("access_token", accessToken);
+            if (refreshToken) {
+              localStorage.setItem("refresh_token", refreshToken);
+            }
+          } catch (e) {
+            console.warn("Failed to store tokens in localStorage:", e);
+          }
+
+          // Set Supabase session
+          try {
+            await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken || undefined,
+            });
+          } catch (e) {
+            console.warn("Failed to set session:", e);
+          }
+
+          // Try to create app profile (non-blocking)
+          try {
+            const response = await fetch("/api/auth/create-profile", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ accessToken, refreshToken }),
+            });
+
+            if (!response.ok) {
+              const errData = await response.json().catch(() => null);
+              console.warn("Profile creation warning:", errData);
+            } else {
+              const profileData = await response.json().catch(() => null);
+              console.log("Profile creation success:", profileData);
+            }
+          } catch (profileError) {
+            console.warn("Profile creation error:", profileError);
+          }
+
+          // Clean up URL and redirect to home
+          setLoading(false);
+          window.location.replace("/");
           return;
         }
 
-        // Store tokens in localStorage
-        localStorage.setItem("access_token", accessToken);
-        if (refreshToken) {
-          localStorage.setItem("refresh_token", refreshToken);
-        }
-
-        // Set Supabase session
-        try {
-          await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken || undefined,
-          });
-        } catch (e) {
-          console.warn("Failed to set session:", e);
-          // Continue anyway, token is stored in localStorage
-        }
-
-        // Call backend to create user profile if it doesn't exist
-        // This ensures customer profile is created on first sign-in
-        try {
-          const response = await fetch("/api/auth/create-profile", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              accessToken,
-              refreshToken,
-            }),
-          });
-
-          if (!response.ok) {
-            const errData = await response.json();
-            console.warn("Profile creation warning:", errData);
-            // Don't fail, continue with redirect
-          } else {
-            const profileData = await response.json();
-            console.log("Profile creation success:", profileData);
-          }
-        } catch (profileError) {
-          console.warn("Profile creation error:", profileError);
-          // Non-critical, continue with redirect
-        }
-
-        // Clean up URL and redirect to home
-        setLoading(false);
-        window.location.replace("/");
+        // Nothing matched
+        setError("No valid parameters received");
+        setTimeout(() => router.push("/user/login"), 2000);
       } catch (e) {
         console.error("OAuth callback error:", e);
         setError("Authentication failed");
@@ -93,11 +126,11 @@ export default function OAuthSuccessPage() {
         {error ? (
           <div>
             <h2 style={{ color: "#d32f2f", marginBottom: "10px" }}>
-              Authentication Failed
+              فشل تسجيل الدخول
             </h2>
             <p style={{ color: "#666", marginBottom: "10px" }}>{error}</p>
             <p style={{ color: "#999", fontSize: "14px" }}>
-              Redirecting to login...
+              التوجبة إلى صفحة تسجيل الدخول...
             </p>
           </div>
         ) : (
@@ -114,9 +147,9 @@ export default function OAuthSuccessPage() {
               }}
             ></div>
             <h2 style={{ color: "#03081f", marginBottom: "10px" }}>
-              Signing you in...
+              تسجيل الدخول ناجح
             </h2>
-            <p style={{ color: "#666" }}>Setting up your account</p>
+            <p style={{ color: "#666" }}>اعداد الحساب</p>
             <style>{`
               @keyframes spin {
                 0% { transform: rotate(0deg); }

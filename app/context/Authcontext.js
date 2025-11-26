@@ -91,6 +91,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     // Step 3: Clear React state by calling refreshUser (will detect no token and clear state)
+    window.location.reload();
     setIsAuthenticated(false);
     setIsCustomer(false);
     setUserId(null);
@@ -102,7 +103,6 @@ export const AuthProvider = ({ children }) => {
     if (typeof window !== "undefined") {
       try {
         window.location.href = "/user/login";
-        window.location.reload();
       } catch (e) {
         window.location.reload();
       }
