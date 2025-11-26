@@ -12,11 +12,8 @@ export default function OAuthSuccessPage() {
   useEffect(() => {
     async function handleOAuthCallback() {
       try {
-        // Handle two flows:
-        // 1) Email confirmation links from Supabase: ?token_hash=...&type=signup
-        // 2) OAuth callback tokens: ?access_token=...&refresh_token=...
-
-        const tokenHash = searchParams.get("token_hash");
+        const tokenHash =
+          searchParams.get("token_hash") || searchParams.get("token");
         const type = searchParams.get("type");
         const accessToken =
           searchParams.get("access_token") || searchParams.get("accessToken");
@@ -26,22 +23,22 @@ export default function OAuthSuccessPage() {
         // Case A: Email confirmation (verify OTP)
         if (tokenHash && type) {
           try {
-            const { data, error } = await supabase.auth.verifyOtp({
+            console.log("Verifying email token:", { tokenHash, type });
+            const { data, error: verifyError } = await supabase.auth.verifyOtp({
               type,
               token: tokenHash,
             });
 
-            if (error) {
-              console.error("Email confirmation failed:", error);
-              setError("فشل تأكيد البريد الإلكتروني");
+            if (verifyError) {
+              console.error("Email confirmation failed:", verifyError);
+              setError("فشل تأكيد البريد الإلكتروني: " + verifyError.message);
               setTimeout(() => router.push("/user/login"), 3000);
               return;
             }
 
-            // Confirmation success — redirect to login with a flag
+            // success -> redirect to login with flag
             setLoading(false);
-            // use replace so user can't go back to confirmation URL
-            window.location.replace("/user/login");
+            window.location.replace("/user/login?confirmed=true");
             return;
           } catch (e) {
             console.error("verifyOtp error:", e);
@@ -56,11 +53,10 @@ export default function OAuthSuccessPage() {
           // Store tokens in localStorage
           try {
             localStorage.setItem("access_token", accessToken);
-            if (refreshToken) {
+            if (refreshToken)
               localStorage.setItem("refresh_token", refreshToken);
-            }
           } catch (e) {
-            console.warn("Failed to store tokens in localStorage:", e);
+            console.warn("Failed to store tokens:", e);
           }
 
           // Set Supabase session
