@@ -178,9 +178,15 @@ const LoginPages = () => {
             >
               <FcGoogle size={22} /> تسجيل الدخول بأستخدام جوجل
             </button>
-            <button className="border border-blue-600 text-blue-600 flex items-center gap-2 justify-center py-2 rounded text-sm font-medium hover:bg-blue-50 transition-colors duration-200">
-              <FaFacebook size={22} /> Continue with Facebook
+            <button
+              disabled
+              className="border border-blue-600 text-blue-600 flex items-center gap-2 justify-center py-2 rounded text-sm font-medium hover:bg-blue-50 transition-colors duration-200 opacity-50 cursor-not-allowed"
+            >
+              <FaFacebook size={22} /> تسجيل الدخول بأستخدام فيسبوك
             </button>
+            <p className="text-center text-sm text-gray-600">
+              سيتم اتاحة فيسبوك قريبا
+            </p>
           </div>
         </div>
       </div>

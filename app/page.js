@@ -148,8 +148,17 @@ const Home = () => {
         {/* Best Resturant Section */}
         <RecentRestaurantsSection />
         {/* Partner section */}
-        <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-4">
+        <section className="py-16 bg-gray-50 relative">
+          {/* Coming Soon Overlay */}
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 rounded-2xl">
+            <div className="text-center">
+              <p className="text-white text-4xl lg:text-5xl font-bold">
+                SOON - قريبا
+              </p>
+            </div>
+          </div>
+
+          <div className="container mx-auto px-4 pointer-events-none opacity-60">
             <div className="flex flex-row flex-wrap gap-8 justify-center">
               {/* Business Partnership Card */}
               <div
