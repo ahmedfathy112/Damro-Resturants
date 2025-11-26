@@ -18,14 +18,6 @@ export async function POST(request) {
       );
     }
 
-    // --- FIX APPLIED HERE: Use the official Supabase SDK (supabaseServer) ---
-    // The verifyOtp function is the correct method for a server-side exchange
-    // of the token hash and type (which will be 'signup' or 'email')
-
-    // Note: The 'token' in the verifyOtp call should be the token_hash from the URL.
-    // The 'type' should be one of 'signup', 'invite', 'magiclink', etc.
-
-    // For email confirmation links, the 'type' in the URL is typically 'signup'.
     const { data, error } = await supabaseAdmin.auth.verifyOtp({
       token: token,
       type: type,

@@ -46,7 +46,7 @@ export default function OAuthSuccessPage() {
                 "فشل تأكيد البريد الإلكتروني: " +
                   (payload?.error?.message || JSON.stringify(payload))
               );
-              setTimeout(() => router.push("/user/login"), 3000);
+              // setTimeout(() => router.push("/user/login"), 3000);
               return;
             }
 
@@ -57,7 +57,7 @@ export default function OAuthSuccessPage() {
           } catch (e) {
             console.error("Server confirm error:", e);
             setError("حدث خطأ أثناء تأكيد البريد الإلكتروني");
-            setTimeout(() => router.push("/user/login"), 3000);
+            // setTimeout(() => router.push("/user/login"), 3000);
             return;
           }
         }
@@ -110,11 +110,11 @@ export default function OAuthSuccessPage() {
 
         // Nothing matched
         setError("No valid parameters received");
-        setTimeout(() => router.push("/user/login"), 2000);
+        // setTimeout(() => router.push("/user/login"), 2000);
       } catch (e) {
         console.error("OAuth callback error:", e);
         setError("Authentication failed");
-        setTimeout(() => router.push("/user/login"), 3000);
+        // setTimeout(() => router.push("/user/login"), 3000);
       }
     }
 
