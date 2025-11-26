@@ -5,7 +5,6 @@ import { IoMdArrowRoundBack } from "react-icons/io";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
-import "bootstrap/dist/css/bootstrap.min.css";
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
@@ -51,7 +50,6 @@ const LoginPages = () => {
           "access_token",
           response.data.session.access_token
         );
-        console.log(response.data.session.access_token);
         router.push("/");
       } else {
         setLoading(false);
@@ -92,100 +90,96 @@ const LoginPages = () => {
     }
   };
   return (
-    <div className="login">
-      <h3 className=" font-bold text-center mt-4 !text-white py-3 px-4 !text-[18px] bg-black">
-        {" "}
+    <div className="login" dir="rtl">
+      <h3 className="font-bold text-center mt-4 text-white py-3 px-4 text-[18px] bg-black">
         ملحوظه : تسجيل الدخول او إنشاء الحساب بأستخدام جوجل هو متاح للعملاء فقط
         وليس للمطاعم نرجو من المطاعم ان يقومو بإنشاء حساب لهم من صفحة إنشاء
-        الحساب{" "}
+        الحساب
       </h3>
-      {/* Login Form + Social Login */}
-      <div className="container py-5 vh-100 d-flex align-items-center justify-content-center">
-        <div className="row w-100 align-items-center">
-          {/* Left Side - Form */}
-          <div className="col-lg-5 col-md-6 col-12 mb-4">
-            <h3 className="mb-3 fw-bold">Login</h3>
+
+      <div className="py-5 min-h-screen flex items-center justify-center px-4 ">
+        <div className="w-full flex flex-wrap items-center justify-center">
+          <div className="w-full lg:w-5/12 md:w-1/2 mb-4 px-4">
+            <h3 className="mb-3 font-bold font-serif">تسجيل الدخول</h3>
 
             <form onSubmit={handleLogin} className="mb-3">
               <div className="mb-3">
-                <label htmlFor="email" className="form-label fw-semibold">
-                  Email
+                <label htmlFor="email" className="block font-semibold mb-1">
+                  البريد الإلكتروني
                 </label>
                 <input
                   type="email"
                   id="email"
-                  className="form-control"
-                  placeholder="Enter your email"
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="أدخل البريد الإلكتروني"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
 
               <div className="mb-3">
-                <label htmlFor="password" className="form-label fw-semibold">
-                  Password
+                <label htmlFor="password" className="block font-semibold mb-1">
+                  كلمة المرور
                 </label>
                 <input
                   type="password"
                   id="password"
-                  className="form-control"
-                  placeholder="Enter your password"
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="أدخل كلمة المرور"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
 
-              <button type="submit" className="btn btn-dark w-100">
-                Login
+              <button
+                type="submit"
+                className="w-full bg-black text-white py-2 rounded text-sm font-semibold hover:bg-gray-900 transition-colors duration-200"
+              >
+                تسجيل الدخول
               </button>
             </form>
-            {/* create an account button */}
+
             <div
-              className="flex items-center justify-between !px-3 !py-2 translate-y-[30px] max-w-lg mx-auto"
+              className="flex items-center justify-between px-3 py-2 translate-y-6 max-w-lg mx-auto"
               style={{ borderBottom: "1px solid #ccc" }}
             >
-              <Link href="/" className="!text-dark">
+              <Link href="/" className="text-gray-800">
                 <IoMdArrowRoundBack size={20} />
               </Link>
               <Link
                 href="/user/register"
                 style={{ textDecoration: "none", fontSize: "14px" }}
-                className="!text-dark"
+                className="text-gray-800"
               >
-                Create an Account
+                إنشاء حساب جديد
               </Link>
             </div>
           </div>
 
-          {/* Divider in middle */}
-          <div className="col-lg-2 d-none d-lg-flex justify-content-center mb-3">
-            <div className="d-flex flex-column align-items-center">
+          <div className="hidden lg:flex lg:w-2/12 justify-center mb-3">
+            <div className="flex flex-col items-center">
               <div
                 style={{ width: "1px", height: "90px", background: "#ccc" }}
-              ></div>
+              />
               <p className="my-2">Or</p>
               <div
                 style={{ width: "1px", height: "90px", background: "#ccc" }}
-              ></div>
+              />
             </div>
           </div>
 
-          {/* Right Side - Social Login */}
-          <div className="col-lg-5 col-md-6 col-12 d-flex flex-column gap-3 mt-2">
-            <p className="text-center d-lg-none">Or continue with</p>
+          <div className="w-full lg:w-5/12 md:w-1/2 flex flex-col gap-3 mt-2 px-4">
+            <p className="text-center lg:hidden">او أستخدام</p>
             <button
               type="button"
               onClick={handleGoogleLogin}
               disabled={loading}
-              className="btn btn-outline-dark d-flex align-items-center gap-2 justify-content-center"
+              className="border border-gray-800 text-gray-800 flex items-center gap-2 justify-center py-2 rounded text-sm font-medium hover:bg-gray-100 transition-colors duration-200 disabled:opacity-50"
             >
-              <FcGoogle size={22} /> Continue with Google
+              <FcGoogle size={22} /> تسجيل الدخول بأستخدام جوجل
             </button>
-            <button className="btn btn-outline-primary d-flex align-items-center gap-2 justify-content-center">
+            <button className="border border-blue-600 text-blue-600 flex items-center gap-2 justify-center py-2 rounded text-sm font-medium hover:bg-blue-50 transition-colors duration-200">
               <FaFacebook size={22} /> Continue with Facebook
-            </button>
-            <button className="btn btn-outline-secondary d-flex align-items-center gap-2 justify-content-center">
-              <MdEmail size={22} /> Continue with Email
             </button>
           </div>
         </div>

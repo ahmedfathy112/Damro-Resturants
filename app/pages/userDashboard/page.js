@@ -1062,7 +1062,6 @@ const UserDashboard = () => {
         <div className="w-64 bg-white shadow-sm border-l border-gray-200 min-h-screen hidden md:block">
           <div className="p-6">
             <h1 className="text-xl font-bold text-gray-900">لوحة التحكم</h1>
-            <p className="text-sm text-gray-600 mt-1">مرحباً أحمد محمد</p>
           </div>
 
           <nav className="mt-6">
@@ -1088,20 +1087,20 @@ const UserDashboard = () => {
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden p-4 text-2xl fixed top-4"
+          className="!md:hidden !fixed !top-4 !left-4 !z-[9999] !bg-blue-600 !shadow-lg !p-2 !rounded-lg !text-white !hover:bg-blue-700 !transition-colors"
           onClick={() => setIsMobile(!isMobile)}
         >
-          <Menu />
+          <Menu size={24} />
         </button>
 
         {/* Sidebar in Mobile */}
         {isMobile && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-40 z-40"
+            className="!fixed !inset-0 !bg-black !bg-opacity-40 !z-[9998]"
             onClick={() => setIsMobile(false)}
           >
             <div
-              className="absolute right-0 top-0 w-64 bg-white shadow-sm border-l border-gray-200 min-h-screen z-50"
+              className="!absolute !right-0 !top-0 !w-64 !bg-white !shadow-sm !border-l !border-gray-200 !min-h-screen !z-[9999]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6 flex justify-between items-center">

@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import "../../../components/resturantPage/ResturentStyle.css";
-import "bootstrap/dist/css/bootstrap.min.css";
+
 import ResturentDatails from "../../../components/resturantPage/ResHome";
 // import Burgers from "../../../components/resturantPage/Burgers";
 import { useParams } from "next/navigation";

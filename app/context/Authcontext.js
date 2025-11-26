@@ -73,25 +73,26 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      // Step 1: Sign out from Supabase
+      //  Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error && error.status !== 404) {
-        // Ignore 404 errors (user already signed out)
         console.warn("Supabase signOut error:", error);
       }
     } catch (err) {
       console.warn("Supabase signOut error:", err);
     }
 
-    // Step 2: Clear all local storage tokens
+    window.location.reload();
+    console.log("im out");
+    //  Clear all local storage
     if (typeof window !== "undefined") {
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
+      localStorage.removeItem("supabase.auth.token");
       sessionStorage.clear();
     }
 
-    // Step 3: Clear React state by calling refreshUser (will detect no token and clear state)
-    window.location.reload();
+    //  Clear user state
     setIsAuthenticated(false);
     setIsCustomer(false);
     setUserId(null);
@@ -99,13 +100,11 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setResturant(false);
 
-    // Step 4: Redirect to login page
+    //  Redirect to login page after clearing data
     if (typeof window !== "undefined") {
-      try {
+      setTimeout(() => {
         window.location.href = "/user/login";
-      } catch (e) {
-        window.location.reload();
-      }
+      }, 100);
     }
   };
 

@@ -148,7 +148,7 @@ const NavBar = () => {
             </h1>
             <button
               onClick={logout}
-              className="nav-link cursor-pointer rounded-[100px] !text-white !bg-red-600 min-w-[100px] xl:min-w-[127px] !py-[8px] text-center !px-[5px] text-[14px] lg:text-[16px] hover:!bg-red-700 transition-colors duration-300"
+              className="w-full rounded-[100px] !text-white !bg-red-600 !py-[10px] text-center text-[14px] hover:!bg-red-700 transition-colors duration-300 font-semibold"
             >
               تسجيل الخروج
             </button>

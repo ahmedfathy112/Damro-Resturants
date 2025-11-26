@@ -13,7 +13,7 @@ import {
   FaEye,
   FaEyeSlash,
 } from "react-icons/fa";
-import "bootstrap/dist/css/bootstrap.min.css";
+
 import { supabase } from "../../lib/supabaseClient";
 import Swal from "sweetalert2";
 
@@ -227,18 +227,18 @@ const RegisterPage = () => {
 
   return (
     <div
-      className="register my-10 d-flex align-items-center"
+      className="register my-10 flex items-center"
       style={{
         minHeight: "100vh",
       }}
     >
-      <div className="container">
-        <div className="row align-items-center shadow-lg rounded-3 overflow-hidden bg-white">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-wrap items-center shadow-lg rounded overflow-hidden bg-white">
           {/* Left Side - Form */}
-          <div className="col-lg-7 col-md-6 p-5">
+          <div className="w-full lg:w-7/12 md:w-1/2 p-5">
             <div className="text-center mb-4">
-              <h1 className="mb-3 fw-bold text-dark">إنشاء حساب جديد</h1>
-              <p className="text-muted">
+              <h1 className="mb-3 font-bold text-gray-800">إنشاء حساب جديد</h1>
+              <p className="text-gray-500">
                 انضم إلى عائلة الطعام 🍴 واستمتع بأفضل الأطباق والتوصيل السريع!
               </p>
             </div>
@@ -247,17 +247,15 @@ const RegisterPage = () => {
             <form onSubmit={handleSubmit}>
               {/* نوع الحساب */}
               <div className="mb-4">
-                <label className="form-label fw-semibold mb-3">
-                  نوع الحساب
-                </label>
+                <label className="block font-semibold mb-3">نوع الحساب</label>
                 {/* here the user choose if he`s a user or resturant */}
-                <div className="row g-3">
-                  <div className="col-6">
+                <div className="flex flex-wrap flex-row gap-2">
+                  <div className="w-[45%]">
                     <div
-                      className={`p-3 border rounded-3 text-center cursor-pointer transition-all ${
+                      className={`p-3 border rounded-lg text-center cursor-pointer transition-all ${
                         formData.user_type === "customer"
-                          ? "border-primary bg-primary bg-opacity-10 text-primary"
-                          : "border-secondary text-muted hover-shadow"
+                          ? "border-blue-500 bg-blue-50 text-blue-600"
+                          : "border-gray-300 text-gray-600"
                       }`}
                       style={{ cursor: "pointer" }}
                       onClick={() =>
@@ -272,12 +270,12 @@ const RegisterPage = () => {
                       <small>طلب الطعام والتوصيل</small>
                     </div>
                   </div>
-                  <div className="col-6">
+                  <div className="w-1/2">
                     <div
-                      className={`p-3 border rounded-3 text-center cursor-pointer transition-all ${
+                      className={`p-3 border rounded-lg text-center cursor-pointer transition-all ${
                         formData.user_type === "restaurant"
-                          ? "border-success bg-success bg-opacity-10 text-success"
-                          : "border-secondary text-muted hover-shadow"
+                          ? "border-green-500 bg-green-50 text-green-600"
+                          : "border-gray-300 text-gray-600"
                       }`}
                       style={{ cursor: "pointer" }}
                       onClick={() =>
@@ -298,7 +296,7 @@ const RegisterPage = () => {
               {/* in case he is user */}
               {/* Full name */}
               <div className="mb-3">
-                <label htmlFor="full_name" className="form-label fw-semibold">
+                <label htmlFor="full_name" className="block font-semibold mb-1">
                   الاسم الكامل{" "}
                   {formData.user_type === "restaurant" && "/ اسم المطعم"}
                 </label>
@@ -306,8 +304,8 @@ const RegisterPage = () => {
                   type="text"
                   id="full_name"
                   name="full_name"
-                  className={`form-control ${
-                    errors.full_name ? "is-invalid" : ""
+                  className={`w-full border rounded px-3 py-2 ${
+                    errors.full_name ? "border-red-500" : ""
                   }`}
                   placeholder={
                     formData.user_type === "restaurant"
@@ -318,7 +316,9 @@ const RegisterPage = () => {
                   onChange={handleInputChange}
                 />
                 {errors.full_name && (
-                  <div className="invalid-feedback">{errors.full_name}</div>
+                  <div className="text-red-600 text-sm mt-1">
+                    {errors.full_name}
+                  </div>
                 )}
               </div>
 
@@ -335,15 +335,15 @@ const RegisterPage = () => {
                     type="text"
                     id="restaurant_name"
                     name="restaurant_name"
-                    className={`form-control ${
-                      errors.restaurant_name ? "is-invalid" : ""
+                    className={`w-full border rounded px-3 py-2 ${
+                      errors.restaurant_name ? "border-red-500" : ""
                     }`}
                     placeholder="أدخل اسم المطعم"
                     value={formData.restaurant_name}
                     onChange={handleInputChange}
                   />
                   {errors.restaurant_name && (
-                    <div className="invalid-feedback">
+                    <div className="text-red-600 text-sm">
                       {errors.restaurant_name}
                     </div>
                   )}
@@ -352,39 +352,43 @@ const RegisterPage = () => {
 
               {/* Email */}
               <div className="mb-3">
-                <label htmlFor="email" className="form-label fw-semibold">
+                <label htmlFor="email" className="block font-semibold mb-1">
                   البريد الإلكتروني
                 </label>
                 <input
                   type="email"
                   id="email"
                   name="email"
-                  className={`form-control ${errors.email ? "is-invalid" : ""}`}
+                  className={`w-full border rounded px-3 py-2 ${
+                    errors.email ? "border-red-500" : ""
+                  }`}
                   placeholder="أدخل بريدك الإلكتروني"
                   value={formData.email}
                   onChange={handleInputChange}
                 />
                 {errors.email && (
-                  <div className="invalid-feedback">{errors.email}</div>
+                  <div className="text-red-600 text-sm">{errors.email}</div>
                 )}
               </div>
 
               {/* Phone Num  */}
               <div className="mb-3">
-                <label htmlFor="phone" className="form-label fw-semibold">
+                <label htmlFor="phone" className="block font-semibold mb-1">
                   رقم الهاتف
                 </label>
                 <input
                   type="tel"
                   id="phone"
                   name="phone"
-                  className={`form-control ${errors.phone ? "is-invalid" : ""}`}
+                  className={`w-full border rounded px-3 py-2 ${
+                    errors.phone ? "border-red-500" : ""
+                  }`}
                   placeholder="أدخل رقم هاتفك"
                   value={formData.phone}
                   onChange={handleInputChange}
                 />
                 {errors.phone && (
-                  <div className="invalid-feedback">{errors.phone}</div>
+                  <div className="text-red-600 text-sm">{errors.phone}</div>
                 )}
               </div>
 
@@ -398,15 +402,15 @@ const RegisterPage = () => {
                     type="text"
                     id="address"
                     name="address"
-                    className={`form-control ${
-                      errors.address ? "is-invalid" : ""
+                    className={`w-full border rounded px-3 py-2 ${
+                      errors.address ? "border-red-500" : ""
                     }`}
                     placeholder="أدخل عنوان منزلك"
                     value={formData.address}
                     onChange={handleInputChange}
                   />
                   {errors.address && (
-                    <div className="invalid-feedback">{errors.address}</div>
+                    <div className="text-red-600 text-sm">{errors.address}</div>
                   )}
                 </div>
               ) : (
@@ -422,15 +426,15 @@ const RegisterPage = () => {
                     type="text"
                     id="restaurant_address"
                     name="restaurant_address"
-                    className={`form-control ${
-                      errors.restaurant_address ? "is-invalid" : ""
+                    className={`w-full border rounded px-3 py-2 ${
+                      errors.restaurant_address ? "border-red-500" : ""
                     }`}
                     placeholder="أدخل عنوان المطعم"
                     value={formData.restaurant_address}
                     onChange={handleInputChange}
                   />
                   {errors.restaurant_address && (
-                    <div className="invalid-feedback">
+                    <div className="text-red-600 text-sm">
                       {errors.restaurant_address}
                     </div>
                   )}
@@ -449,7 +453,7 @@ const RegisterPage = () => {
                   <textarea
                     id="description"
                     name="description"
-                    className="form-control"
+                    className="w-full border rounded px-3 py-2"
                     placeholder="أدخل وصفًا مختصرًا للمطعم"
                     rows="3"
                     value={formData.description}
@@ -463,13 +467,13 @@ const RegisterPage = () => {
                 <label htmlFor="password" className="form-label fw-semibold">
                   كلمة المرور
                 </label>
-                <div className="position-relative">
+                <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     id="password"
                     name="password"
-                    className={`form-control ${
-                      errors.password ? "is-invalid" : ""
+                    className={`w-full border rounded px-3 py-2 ${
+                      errors.password ? "border-red-500" : ""
                     }`}
                     placeholder="أدخل كلمة المرور"
                     value={formData.password}
@@ -477,7 +481,7 @@ const RegisterPage = () => {
                   />
                   <button
                     type="button"
-                    className="btn position-absolute end-0 top-50 translate-middle-y border-0"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-0"
                     style={{ zIndex: 10 }}
                     onClick={() => setShowPassword(!showPassword)}
                   >
@@ -497,13 +501,13 @@ const RegisterPage = () => {
                 >
                   تأكيد كلمة المرور
                 </label>
-                <div className="position-relative">
+                <div className="relative">
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     id="confirmPassword"
                     name="confirmPassword"
-                    className={`form-control ${
-                      errors.confirmPassword ? "is-invalid" : ""
+                    className={`w-full border rounded px-3 py-2 ${
+                      errors.confirmPassword ? "border-red-500" : ""
                     }`}
                     placeholder="أعد إدخال كلمة المرور"
                     value={formData.confirmPassword}
@@ -511,7 +515,7 @@ const RegisterPage = () => {
                   />
                   <button
                     type="button"
-                    className="btn position-absolute end-0 top-50 translate-middle-y border-0"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-0"
                     style={{ zIndex: 10 }}
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
@@ -527,14 +531,20 @@ const RegisterPage = () => {
 
               {/* Error Message  */}
               {errors.submit && (
-                <div className="alert alert-danger mb-3" role="alert">
+                <div
+                  className="bg-red-100 text-red-800 p-3 rounded mb-3"
+                  role="alert"
+                >
                   {errors.submit}
                 </div>
               )}
 
               {/* Alert for the restaurant */}
               {formData.user_type === "restaurant" && (
-                <div className="alert alert-info mb-4" role="alert">
+                <div
+                  className="bg-blue-100 text-blue-800 p-3 rounded mb-4"
+                  role="alert"
+                >
                   <strong>ملاحظة:</strong> حسابات المطاعم تخضع لمراجعة الإدارة
                   قبل التفعيل
                 </div>
@@ -543,12 +553,12 @@ const RegisterPage = () => {
               {/* Submit */}
               <button
                 type="submit"
-                className="btn btn-primary w-100 mb-3 py-3 fw-semibold"
+                className="w-full bg-blue-600 text-white mb-3 py-3 font-semibold rounded text-base hover:bg-blue-700 transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
                 disabled={loading}
               >
                 {loading ? (
                   <>
-                    <span className="spinner-border spinner-border-sm me-2"></span>
+                    <span className="inline-block mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     جاري إنشاء الحساب...
                   </>
                 ) : (
@@ -557,11 +567,11 @@ const RegisterPage = () => {
               </button>
 
               {/* رابط تسجيل الدخول */}
-              <p className="text-center text-muted mb-0">
+              <p className="text-center text-gray-600 mb-0 text-sm">
                 لديك حساب بالفعل؟{" "}
                 <Link
                   href="/user/login"
-                  className="text-decoration-none fw-semibold text-primary"
+                  className="text-blue-600 font-semibold hover:text-blue-700 transition-colors"
                 >
                   تسجيل الدخول
                 </Link>
@@ -571,7 +581,7 @@ const RegisterPage = () => {
 
           {/* Right Side - Info */}
           <div
-            className="col-lg-5 col-md-6 text-center d-flex flex-column justify-content-center p-5"
+            className="w-full lg:w-5/12 md:w-1/2 text-center flex flex-col justify-center p-5"
             style={{
               background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
             }}
@@ -579,31 +589,31 @@ const RegisterPage = () => {
             <img
               src="/images/register.png"
               alt="تسجيل جديد"
-              className="img-fluid mb-4"
+              className="mb-4 max-h-60 mx-auto"
               style={{ maxHeight: "240px" }}
             />
 
             <h4 className="mb-4 fw-bold text-white">لماذا تنضم إلينا؟</h4>
-            <ul className="list-unstyled text-start d-inline-block fs-6 text-white">
-              <li className="mb-3 d-flex align-items-center gap-3">
-                <FaUtensils className="text-warning fs-5" />
-                <span>الوصول إلى مئات المطاعم</span>
+            <ul className="list-none text-start inline-block text-white text-base">
+              <li className="mb-3 flex items-center gap-3">
+                <FaUtensils className="text-yellow-400" />
+                <span>الوصول الي جميع المطاعم في مكان واحد</span>
               </li>
-              <li className="mb-3 d-flex align-items-center gap-3">
-                <FaPizzaSlice className="text-info fs-5" />
-                <span>عروض حصرية يومية</span>
+              <li className="mb-3 flex items-center gap-3">
+                <FaPizzaSlice className="text-sky-400" />
+                <span>سهوله الاستخدام</span>
               </li>
-              <li className="mb-3 d-flex align-items-center gap-3">
-                <FaFish className="text-success fs-5" />
-                <span>أطباق بحرية طازجة</span>
+              <li className="mb-3 flex items-center gap-3">
+                <FaFish className="text-green-400" />
+                <span>عروض وخصومات</span>
               </li>
-              <li className="mb-3 d-flex align-items-center gap-3">
-                <FaLeaf className="text-light fs-5" />
-                <span>خيارات صحية ونباتية</span>
+              <li className="mb-3 flex items-center gap-3">
+                <FaLeaf className="text-white" />
+                <span>كل هذا بين يديك انت في مكان واحد</span>
               </li>
             </ul>
 
-            <div className="mt-4 p-3 bg-white bg-opacity-20 rounded-3">
+            <div className="mt-4 p-3 bg-white/20 rounded">
               <small className="text-black">
                 🚀 <strong>توصيل سريع</strong> في أقل من 30 دقيقة
               </small>

@@ -4,7 +4,7 @@ import "./ResturentStyle.css";
 import { FaStar, FaMapMarkerAlt, FaPhone } from "react-icons/fa";
 import { MdPlaylistAddCheck } from "react-icons/md";
 import { IoMdBicycle } from "react-icons/io";
-import "bootstrap/dist/css/bootstrap.min.css";
+
 import { supabase } from "../../lib/supabaseClient";
 import Image from "next/image";
 
@@ -81,10 +81,10 @@ const ResturentDatails = ({ restaurantId }) => {
     return (
       <div className="resturentdetails">
         <div className="overlay"></div>
-        <div className="restop d-flex flex-column flex-md-row align-items-center h-100 p-3 gap-4 justify-content-center">
+        <div className="restop flex flex-col md:flex-row items-center h-full p-3 gap-4 justify-center">
           <div className="text-white text-center">
-            <div className="spinner-border text-warning" role="status">
-              <span className="visually-hidden">جاري التحميل...</span>
+            <div className="flex justify-center">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
             </div>
             <p className="mt-3">جاري تحميل بيانات المطعم...</p>
           </div>
@@ -97,7 +97,7 @@ const ResturentDatails = ({ restaurantId }) => {
     return (
       <div className="resturentdetails">
         <div className="overlay"></div>
-        <div className="restop d-flex flex-column flex-md-row align-items-center h-100 p-3 gap-4 justify-content-center">
+        <div className="restop flex flex-col md:flex-row items-center h-full p-3 gap-4 justify-center">
           <div className="text-white text-center">
             <h2>المطعم غير موجود</h2>
             <p>عذراً، لم يتم العثور على بيانات المطعم</p>
@@ -111,8 +111,8 @@ const ResturentDatails = ({ restaurantId }) => {
     <div className="resturentdetails">
       <div className="overlay"></div>
 
-      <div className="restop d-flex flex-column flex-md-row align-items-center h-100 p-3 gap-4">
-        <div className="ResturentdetailsText text-white text-end text-md-end">
+      <div className="restop flex flex-col md:flex-row items-center h-full p-3 gap-4">
+        <div className="ResturentdetailsText text-white text-right md:text-right">
           <h2>مرحباً بك في</h2>
           <br />
           <h1>{restaurant.name || "اسم المطعم"}</h1>
@@ -120,60 +120,58 @@ const ResturentDatails = ({ restaurantId }) => {
           {/* contact details */}
           <div className="restaurant-info mt-4">
             {restaurant.address && (
-              <div className="d-flex align-items-center justify-content-end mb-2">
+              <div className="flex items-center justify-end mb-2">
                 <FaMapMarkerAlt className="me-2" />
                 <span>{restaurant.address}</span>
               </div>
             )}
 
             {restaurant.phone && (
-              <div className="d-flex align-items-center justify-content-end mb-2">
+              <div className="flex items-center justify-end mb-2">
                 <FaPhone className="me-2" />
                 <span>{restaurant.phone}</span>
               </div>
             )}
           </div>
 
-          <div className="d-flex flex-column flex-sm-row gap-3 mt-5">
-            <button className="d-flex align-items-center gap-3 btn btn-outline-light p-3">
+          <div className="flex flex-col sm:flex-row gap-3 mt-5">
+            <button className="flex items-center gap-3 border border-white text-white p-3 rounded hover:bg-white hover:text-black transition-colors">
               <MdPlaylistAddCheck style={{ fontSize: "24px" }} />
-              <span className="fs-6">الحد الأدنى للطلب: 30 جنيه</span>
+              <span className="text-sm">الحد الأدنى للطلب: 30 جنيه</span>
             </button>
 
-            <button className="d-flex align-items-center gap-3 btn btn-outline-light p-3">
+            <button className="flex items-center gap-3 border border-white text-white p-3 rounded hover:bg-white hover:text-black transition-colors">
               <IoMdBicycle style={{ fontSize: "24px" }} />
-              <span className="fs-6">وقت التوصيل: 30-45 دقيقة</span>
+              <span className="text-sm">وقت التوصيل: 30-45 دقيقة</span>
             </button>
           </div>
         </div>
 
-        <div className="Resimage bg-white p-3 rounded shadow position-relative">
+        <div className="Resimage bg-white p-3 rounded shadow relative">
           {restaurant.image_url ? (
             <Image
               src={restaurant.image_url}
               alt={restaurant.name}
               width={200}
               height={200}
-              className="img-fluid rounded"
+              className="rounded"
               style={{ objectFit: "cover", width: "200px", height: "200px" }}
             />
           ) : (
             <img
               src="/images/ResDeHome.png"
               alt="صورة تفاصيل المطعم"
-              className="img-fluid rounded"
+              className="rounded"
               style={{ width: "200px", height: "200px", objectFit: "cover" }}
             />
           )}
 
           <div className="rating-box">
             <h4 className="mb-1">{averageRating}</h4>
-            <div className="d-flex justify-content-center gap-1">
+            <div className="flex justify-center gap-1">
               {renderStars(averageRating)}
             </div>
-            <p className="mt-1 mb-0" style={{ fontSize: "12px" }}>
-              {totalReviews} تقييم
-            </p>
+            <p className="mt-1 mb-0 text-xs">{totalReviews} تقييم</p>
           </div>
         </div>
       </div>

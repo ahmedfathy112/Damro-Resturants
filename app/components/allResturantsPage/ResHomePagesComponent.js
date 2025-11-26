@@ -3,36 +3,19 @@ import React from "react";
 import { GoSearch } from "react-icons/go";
 import "./ResturentStyle.css";
 import AllResApi from "./AllResApi";
-import "bootstrap/dist/css/bootstrap.min.css";
 
 const ResHomePagesComponent = () => {
   return (
-    <div
-      className="ResHomePagesComponent px-3 py-3 mt-2"
-      dir="rtl"
-      style={{ color: "black" }}
-    >
+    <div className="ResHomePagesComponent px-3 py-3 mt-2 text-black" dir="rtl">
       {/* header and search */}
-      <div
-        className="d-flex align-items-center flex-wrap mb-4"
-        style={{ justifyContent: "space-between" }}
-      >
-        <h4 className="fw-bold !text-3xl m-0">مطاعمنا</h4>
-        <div
-          className="d-flex align-items-center px-2 py-1 rounded"
-          style={{ border: "1px solid #ccc", maxWidth: "280px" }}
-        >
-          <GoSearch size={20} className="ms-2 text-light" />
+      <div className="flex flex-wrap items-center justify-between mb-4 gap-4">
+        <h4 className="font-bold text-3xl m-0">مطاعمنا</h4>
+        <div className="flex items-center px-2 py-1 rounded border border-gray-300 max-w-xs">
+          <GoSearch size={20} className="ms-2 text-gray-500" />
           <input
             type="text"
-            className="form-control p-0"
+            className="p-0 bg-transparent border-0 outline-none focus:ring-0 text-black placeholder-gray-400"
             placeholder="ابحث عن مطعم..."
-            style={{
-              border: "none",
-              outline: "none",
-              boxShadow: "none",
-              color: "#000",
-            }}
           />
         </div>
       </div>

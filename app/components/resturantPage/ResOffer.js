@@ -1,15 +1,14 @@
 import React from "react";
 import { CiSearch } from "react-icons/ci";
 import { IoMdAdd } from "react-icons/io";
-import "bootstrap/dist/css/bootstrap.min.css";
 
 const ResturentOffer = () => {
   return (
-    <div className="ResOffer mt-5 pt-3  " style={{ direction: "rtl" }}>
-      <div className="ResOfferTop d-flex justify-content-between align-items-center gap-1 px-3">
+    <div className="ResOffer mt-5 pt-3" style={{ direction: "rtl" }}>
+      <div className="ResOfferTop flex justify-between items-center gap-1 px-3">
         <h2>جميع العروض من ماكدونالدز شرق لندن</h2>
         <div
-          className="d-flex align-items-center"
+          className="flex items-center"
           style={{
             border: "1px solid #ccc",
             padding: "5px 10px",
@@ -36,118 +35,69 @@ const ResturentOffer = () => {
       </div>
 
       <div className="ResOffer mt-4 px-3">
-        <div className="whitespace-wrapper  ">
+        <div className="whitespace-wrapper">
           <div
-            className="ResOfferBar-3 d-flex gap-3 mt-4 py-3 align-items-center flex-nowrap px-4"
+            className="ResOfferBar-3 flex gap-3 mt-4 py-3 items-center overflow-x-auto px-4 rounded"
             style={{
-              borderRadius: "5px",
               backgroundColor: "#FC8A06",
-              overflowX: "auto",
               justifyContent: "center",
             }}
           >
-            <button className="btn btn-outline-light fs-6">الكل</button>
-            <button className="btn btn-outline-light">برجر</button>
-            <button className="btn btn-outline-light">بطاطس</button>
-            <button className="btn btn-outline-light">سناكس</button>
-            <button className="btn btn-outline-light">سلطات</button>
-            <button className="btn btn-outline-light whitespace-nowrap">
+            <button className="border border-white text-white px-3 py-1 rounded text-sm font-medium hover:bg-white hover:text-gray-800 transition-colors duration-200">
+              الكل
+            </button>
+            <button className="border border-white text-white px-3 py-1 rounded text-sm font-medium hover:bg-white hover:text-gray-800 transition-colors duration-200">
+              برجر
+            </button>
+            <button className="border border-white text-white px-3 py-1 rounded text-sm font-medium hover:bg-white hover:text-gray-800 transition-colors duration-200">
+              بطاطس
+            </button>
+            <button className="border border-white text-white px-3 py-1 rounded text-sm font-medium hover:bg-white hover:text-gray-800 transition-colors duration-200">
+              سناكس
+            </button>
+            <button className="border border-white text-white px-3 py-1 rounded text-sm font-medium hover:bg-white hover:text-gray-800 transition-colors duration-200">
+              سلطات
+            </button>
+            <button className="border border-white text-white px-3 py-1 rounded text-sm font-medium hover:bg-white hover:text-gray-800 transition-colors duration-200 whitespace-nowrap">
               مشروبات باردة
             </button>
-            <button className="btn btn-outline-light whitespace-nowrap">
+            <button className="border border-white text-white px-3 py-1 rounded text-sm font-medium hover:bg-white hover:text-gray-800 transition-colors duration-200 whitespace-nowrap">
               هابي ميل®
             </button>
           </div>
         </div>
 
         <div className="ResOfferCards mt-4 pb-4">
-          <div className="row ">
-            <div className="col-md-6 col-lg-4  col-sm-12  mt-4">
-              <div
-                className="card position-relative overflow-hidden"
-                style={{ borderRadius: "10px" }}
-              >
-                <img
-                  src="/images/ResDeHome.png"
-                  alt="..."
-                  className="card-img"
-                  style={{ height: "400px", objectFit: "cover" }}
-                />
-
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="mt-4">
                 <div
-                  className="card-img-overlay d-flex flex-column justify-content-end text-white p-3"
-                  style={{ background: "rgba(0,0,0,0.4)" }}
+                  className="relative overflow-hidden rounded-lg"
+                  style={{ borderRadius: "10px" }}
                 >
-                  <h5 className="card-title">ماكدونالدز شرق لندن</h5>
-                  <p className="card-text">خصم على أول طلب</p>
-                  <div className="fw-bold offer">- 20%</div>
+                  <img
+                    src="/images/ResDeHome.png"
+                    alt="..."
+                    className="w-full h-80 object-cover"
+                  />
+
+                  <div
+                    className="absolute inset-0 flex flex-col justify-end text-white p-3"
+                    style={{ background: "rgba(0,0,0,0.4)" }}
+                  >
+                    <h5 className="text-lg">ماكدونالدز شرق لندن</h5>
+                    <p className="text-sm">خصم على أول طلب</p>
+                    <div className="font-bold offer">- 20%</div>
+                  </div>
+
+                  <button className="ResOfferCardsButton">
+                    <i className="i">
+                      <IoMdAdd />
+                    </i>
+                  </button>
                 </div>
-
-                <button className="ResOfferCardsButton">
-                  <i className="i">
-                    <IoMdAdd />
-                  </i>
-                </button>
               </div>
-            </div>
-            {/* col-2 */}
-            <div className="col-md-6 col-lg-4   col-sm-12 mt-4">
-              <div
-                className="card position-relative overflow-hidden"
-                style={{ borderRadius: "10px" }}
-              >
-                <img
-                  src="/images/ResDeHome.png"
-                  alt="..."
-                  className="card-img"
-                  style={{ height: "400px", objectFit: "cover" }}
-                />
-
-                <div
-                  className="card-img-overlay d-flex flex-column justify-content-end text-white p-3"
-                  style={{ background: "rgba(0,0,0,0.4)" }}
-                >
-                  <h5 className="card-title">ماكدونالدز شرق لندن</h5>
-                  <p className="card-text">خصم على أول طلب</p>
-                  <div className="fw-bold offer">- 20%</div>
-                </div>
-
-                <button className="ResOfferCardsButton">
-                  <i className="i">
-                    <IoMdAdd />
-                  </i>
-                </button>
-              </div>
-            </div>
-            {/* col-3 */}
-            <div className="col-md-6 col-lg-4 col-sm-12 mt-4">
-              <div
-                className="card position-relative overflow-hidden"
-                style={{ borderRadius: "10px" }}
-              >
-                <img
-                  src="/images/ResDeHome.png"
-                  alt="..."
-                  className="card-img"
-                  style={{ height: "400px", objectFit: "cover" }}
-                />
-
-                <div
-                  className="card-img-overlay d-flex flex-column justify-content-end text-white p-3"
-                  style={{ background: "rgba(0,0,0,0.4)" }}
-                >
-                  <h5 className="card-title">ماكدونالدز شرق لندن</h5>
-                  <p className="card-text">خصم على أول طلب</p>
-                  <div className="fw-bold offer">- 20%</div>
-                </div>
-
-                <button className="ResOfferCardsButton">
-                  <i className="i">
-                    <IoMdAdd />
-                  </i>
-                </button>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
