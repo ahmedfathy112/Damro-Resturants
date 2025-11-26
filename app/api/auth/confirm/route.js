@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "../../../lib/supabaseClient"; // Using the Server Client initialized with Service Role Key
+import { supabaseAdmin } from "../../../lib/supabaseClient";
 
 // This API route handles the token sent by the client-side page
 // to securely confirm the email using the Supabase Service Role Key.
@@ -26,7 +26,7 @@ export async function POST(request) {
     // The 'type' should be one of 'signup', 'invite', 'magiclink', etc.
 
     // For email confirmation links, the 'type' in the URL is typically 'signup'.
-    const { data, error } = await supabaseServer.auth.verifyOtp({
+    const { data, error } = await supabaseAdmin.auth.verifyOtp({
       token: token,
       type: type,
     });
