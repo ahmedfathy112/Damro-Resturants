@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    instrumentationHook: false,
-  },
   images: {
     remotePatterns: [
       {
@@ -20,11 +17,10 @@ const nextConfig = {
       },
     ],
     unoptimized: true,
-
-    domains: ["damro-resturants.vercel.app"],
   },
 
   trailingSlash: true,
+  // Webpack config for backward compatibility
   webpack: (config) => {
     config.module.rules.push({
       test: /\.(png|jpg|jpeg|gif|svg)$/i,
@@ -32,6 +28,8 @@ const nextConfig = {
     });
     return config;
   },
+  // Turbopack config (Next.js 16+)
+  turbopack: {},
 };
 
 export default nextConfig;
