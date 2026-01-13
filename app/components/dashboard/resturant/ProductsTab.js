@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
+import { compressImage } from "../../../lib/imageCompression";
 
 const ProductsTab = ({ restaurantId }) => {
   const [products, setProducts] = useState([]);
@@ -21,6 +22,7 @@ const ProductsTab = ({ restaurantId }) => {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [compressing, setCompressing] = useState(false);
 
   // حالة نموذج إضافة منتج جديد
   const [newProduct, setNewProduct] = useState({
@@ -222,11 +224,18 @@ const ProductsTab = ({ restaurantId }) => {
     }
 
     try {
-      const imageUrl = await uploadProductImage(file);
+      // ضغط الصورة قبل الرفع
+      setCompressing(true);
+      const compressedFile = await compressImage(file);
+      setCompressing(false);
+
+      // رفع الصورة المضغوطة
+      const imageUrl = await uploadProductImage(compressedFile);
       setNewProduct((prev) => ({ ...prev, image_url: imageUrl }));
       alert("✓ تم رفع الصورة بنجاح");
     } catch (error) {
       console.error("Upload error:", error);
+      setCompressing(false);
       alert(`خطأ في رفع الصورة: ${error.message}`);
     }
   };
@@ -409,15 +418,19 @@ const ProductsTab = ({ restaurantId }) => {
                 صورة المنتج
               </label>
               <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 transition-colors">
+                <label className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                   <Upload size={18} />
-                  {uploading ? "جاري الرفع..." : "اختر صورة"}
+                  {compressing
+                    ? "جاري الضغط..."
+                    : uploading
+                    ? "جاري الرفع..."
+                    : "اختر صورة"}
                   <input
                     type="file"
                     accept="image/*"
                     className="hidden"
                     onChange={handleImageUpload}
-                    disabled={uploading}
+                    disabled={uploading || compressing}
                   />
                 </label>
                 {newProduct.image_url && (
