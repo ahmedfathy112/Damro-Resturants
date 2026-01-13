@@ -1,4 +1,7 @@
 @import "tailwindcss";
+span {
+  font-family: "Courier New", Courier, monospace;
+}
 
 .nav-link {
   text-decoration: none;

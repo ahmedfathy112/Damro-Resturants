@@ -19,7 +19,7 @@ const ResturentDatails = ({ restaurantId }) => {
       if (!restaurantId) return;
 
       try {
-        // جلب بيانات المطعم
+        // fetch restaurant details
         const { data: restaurantData, error: restaurantError } = await supabase
           .from("restaurants")
           .select("*")
@@ -28,7 +28,7 @@ const ResturentDatails = ({ restaurantId }) => {
 
         if (restaurantError) throw restaurantError;
 
-        // جلب التقييمات لحساب المتوسط
+        // fetch reviews to calculate average rating
         const { data: reviewsData, error: reviewsError } = await supabase
           .from("reviews")
           .select("rating")
@@ -36,7 +36,7 @@ const ResturentDatails = ({ restaurantId }) => {
 
         if (reviewsError) throw reviewsError;
 
-        // حساب متوسط التقييم
+        // calculate average rating
         const ratings = reviewsData?.map((review) => review.rating) || [];
         const avgRating =
           ratings.length > 0
@@ -59,7 +59,6 @@ const ResturentDatails = ({ restaurantId }) => {
     fetchRestaurantDetails();
   }, [restaurantId]);
 
-  // دالة لعرض النجوم حسب التقييم
   const renderStars = (rating) => {
     const stars = [];
     const fullStars = Math.floor(rating);
@@ -115,7 +114,9 @@ const ResturentDatails = ({ restaurantId }) => {
         <div className="ResturentdetailsText text-white text-right md:text-right">
           <h2>مرحباً بك في</h2>
           <br />
-          <h1>{restaurant.name || "اسم المطعم"}</h1>
+          <h1 className="text-6xl font-bold max-md:text-5xl">
+            {restaurant.name || "اسم المطعم"}
+          </h1>
 
           {/* contact details */}
           <div className="restaurant-info mt-4">

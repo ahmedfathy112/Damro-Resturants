@@ -18,7 +18,7 @@ const LoginPages = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(""); // check on password and email
+    setError("");
     if (!email || !password) {
       Swal.fire({
         icon: "error",
@@ -66,7 +66,7 @@ const LoginPages = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `/`,
         },
       });
 

@@ -12,7 +12,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { supabase, supabaseAdmin } from "../../../lib/supabaseClient";
+import { supabase } from "../../../lib/supabaseClient";
 
 const ProductsTab = ({ restaurantId }) => {
   const [products, setProducts] = useState([]);
@@ -86,8 +86,8 @@ const ProductsTab = ({ restaurantId }) => {
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${restaurantId}/${fileName}`;
 
-      // استخدام supabaseAdmin بدلاً من supabase العادي
-      const { error: uploadError } = await supabaseAdmin.storage
+      // استخدام supabase للرفع (يعمل مع RLS policies الصحيحة)
+      const { error: uploadError } = await supabase.storage
         .from("menu-item-images")
         .upload(filePath, file, {
           cacheControl: "3600",
