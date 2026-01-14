@@ -68,7 +68,7 @@ const LoginPages = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `/`,
+          redirectTo: `/pages/userDashboard`,
         },
       });
 
@@ -93,10 +93,12 @@ const LoginPages = () => {
   };
   return (
     <div className="login" dir="rtl">
+      {/* warning */}
       <h3 className="font-bold text-center mt-4 text-white py-3 px-4 text-[18px] bg-black">
         ملحوظه : تسجيل الدخول او إنشاء الحساب بأستخدام جوجل هو متاح للعملاء فقط
         وليس للمطاعم نرجو من المطاعم ان يقومو بإنشاء حساب لهم من صفحة إنشاء
-        الحساب
+        وللعلم ايضا انه بعد انشاء المطعم للحساب الخاص به سيتم مراجعته والتاكد من
+        هويته لذلك يرجي وضع بيانات صحيحه الحساب
       </h3>
 
       <div className="py-5 min-h-screen flex items-center justify-center px-4 ">
@@ -155,11 +157,12 @@ const LoginPages = () => {
               </button>
             </form>
 
-            <div
+            <Link
+              href="/user/register"
               className="flex items-center justify-between px-3 py-2 translate-y-6 max-w-lg mx-auto"
               style={{ borderBottom: "1px solid #ccc" }}
             >
-              <Link href="/" className="text-gray-800">
+              <Link href="/user/register" className="text-gray-800">
                 <IoMdArrowRoundBack size={20} />
               </Link>
               <Link
@@ -169,7 +172,7 @@ const LoginPages = () => {
               >
                 إنشاء حساب جديد
               </Link>
-            </div>
+            </Link>
           </div>
 
           <div className="hidden lg:flex lg:w-2/12 justify-center mb-3">

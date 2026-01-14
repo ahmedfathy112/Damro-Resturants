@@ -1087,7 +1087,7 @@ const UserDashboard = () => {
 
         {/* Mobile Menu Button */}
         <button
-          className="!md:hidden !fixed !top-4 !left-4 !z-[9999] !bg-blue-600 !shadow-lg !p-2 !rounded-lg !text-white !hover:bg-blue-700 !transition-colors"
+          className="hidden max-md:block !fixed !top-4 !left-4 !z-[9999] !bg-blue-600 !shadow-lg !p-2 !rounded-lg !text-white !hover:bg-blue-700 !transition-colors"
           onClick={() => setIsMobile(!isMobile)}
         >
           <Menu size={24} />

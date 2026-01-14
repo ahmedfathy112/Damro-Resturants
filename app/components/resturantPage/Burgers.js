@@ -7,6 +7,7 @@ import Image from "next/image";
 
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/Authcontext";
+import { useRouter } from "next/navigation";
 
 const RestaurantMenu = ({ restaurantId }) => {
   const [menuItems, setMenuItems] = useState([]);
@@ -17,7 +18,9 @@ const RestaurantMenu = ({ restaurantId }) => {
   const [error, setError] = useState("");
 
   const { addToCart, restaurantId: currentRestaurantId } = useCart();
-  const { isCustomer } = useAuth();
+
+  const { isCustomer, user, isProfileComplete } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchMenuItems = async () => {
@@ -59,8 +62,30 @@ const RestaurantMenu = ({ restaurantId }) => {
       );
     }
   }, [menuItems, selectedCategory]);
-
+  // add to cart and check if the user complete his info or not
   const handleAddToCart = (item) => {
+    if (!isProfileComplete) {
+      Swal.fire({
+        title: "<strong>بياناتك غير مكتملة!</strong>",
+        icon: "info",
+        html: `
+          أهلاً بك يا <b>${user?.full_name || "عزيزي"}</b>، <br/>
+          يجب إضافة <b>رقم الهاتف والعنوان</b> لتتمكن من إتمام الطلب بنجاح.
+        `,
+        showCloseButton: true,
+        showCancelButton: true,
+        focusConfirm: false,
+        confirmButtonText: '<i class="fa fa-user"></i> أكمل بياناتي الآن',
+        confirmButtonColor: "#3085d6",
+        cancelButtonText: "إلغاء",
+        cancelButtonColor: "#d33",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          router.push("/pages/userDashboard");
+        }
+      });
+      return;
+    }
     addToCart(item, restaurantId);
   };
 

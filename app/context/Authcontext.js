@@ -12,12 +12,12 @@ import { useRouter } from "next/navigation";
 const AuthContext = createContext({
   isAuthenticated: false,
   isCustomer: false,
+  isProfileComplete: false, // الجزء الجديد 1
   userId: null,
   userName: null,
   user: null,
   loading: true,
   refreshUser: async () => {},
-  // define as async so TypeScript knows it returns a Promise
   logout: async () => {},
 });
 
@@ -26,9 +26,7 @@ function decodeJwt(token) {
     const parts = token.split(".");
     if (parts.length < 2) return null;
     const payload = parts[1];
-    // base64url -> base64
     const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-    // add padding
     const pad = base64.length % 4;
     const padded = pad ? base64 + "=".repeat(4 - pad) : base64;
     const json = atob(padded);
@@ -42,6 +40,7 @@ function decodeJwt(token) {
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCustomer, setIsCustomer] = useState(false);
+  const [isProfileComplete, setIsProfileComplete] = useState(false); // الجزء الجديد 2
   const [userId, setUserId] = useState(null);
   const [userName, setUserName] = useState(null);
   const [user, setUser] = useState(null);
@@ -74,7 +73,6 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      //  Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error && error.status !== 404) {
         console.warn("Supabase signOut error:", error);
@@ -84,8 +82,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     window.location.reload();
-    console.log("im out");
-    //  Clear all local storage
+
     if (typeof window !== "undefined") {
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
@@ -93,15 +90,14 @@ export const AuthProvider = ({ children }) => {
       sessionStorage.clear();
     }
 
-    //  Clear user state
     setIsAuthenticated(false);
     setIsCustomer(false);
+    setIsProfileComplete(false); // الجزء الجديد 3
     setUserId(null);
     setUserName(null);
     setUser(null);
     setResturant(false);
 
-    //  Redirect to login page after clearing data
     if (typeof window !== "undefined") {
       setTimeout(() => {
         window.location.href = "/user/login";
@@ -117,7 +113,6 @@ export const AuthProvider = ({ children }) => {
           ? localStorage.getItem("access_token")
           : null;
 
-      // If no token in localStorage, check Supabase session (from OAuth)
       if (!token && typeof window !== "undefined") {
         const { data } = await supabase.auth.getSession();
         if (data.session?.access_token) {
@@ -129,6 +124,7 @@ export const AuthProvider = ({ children }) => {
       if (!token) {
         setIsAuthenticated(false);
         setIsCustomer(false);
+        setIsProfileComplete(false); // الجزء الجديد 4
         setUserId(null);
         setUserName(null);
         setUser(null);
@@ -138,9 +134,9 @@ export const AuthProvider = ({ children }) => {
 
       const decoded = decodeJwt(token);
       if (!decoded) {
-        // token invalid or can't decode
         setIsAuthenticated(false);
         setIsCustomer(false);
+        setIsProfileComplete(false); // الجزء الجديد 5
         setUserId(null);
         setUserName(null);
         setUser(null);
@@ -156,17 +152,17 @@ export const AuthProvider = ({ children }) => {
         (decoded.user_metadata && decoded.user_metadata.user_type) ||
         decoded.user_type ||
         null;
-      // عشان نفك ترميز الاسم اللي مكتوب بالعربيه
+
       function fixEncoding(str) {
         if (!str) return null;
         return Buffer.from(str, "latin1").toString("utf8");
       }
+
       const fullNameRaw =
         decoded.user_metadata?.full_name || decoded.full_name || null;
 
       let fullName = fullNameRaw ? fixEncoding(fullNameRaw) : null;
 
-      // Fallback: if fullName is not in JWT, try Supabase auth user metadata
       if (!fullName && typeof window !== "undefined") {
         try {
           const { data: authUser } = await supabase.auth.getUser();
@@ -177,30 +173,28 @@ export const AuthProvider = ({ children }) => {
               authUser.user.email?.split("@")[0];
             fullName = metaName ? fixEncoding(metaName) : null;
           }
-        } catch (e) {
-          // ignore
-        }
+        } catch (e) {}
       }
 
-      // Last resort: use email prefix
       if (!fullName && decoded.email) {
         fullName = decoded.email.split("@")[0];
       }
-      // get the address of the resturant if exists
+
       const addressRaw =
         decoded.user_metadata?.restaurant_address || decoded.address || null;
       const addressFixed = addressRaw ? fixEncoding(addressRaw) : null;
       setResturantAddress(addressFixed);
-      // get the address of the resturant if exists
-      const userAddress =
+
+      const userAddressRaw =
         decoded.user_metadata?.address || decoded.address || null;
-      const userAddressFixed = userAddress ? fixEncoding(userAddress) : null;
+      const userAddressFixed = userAddressRaw
+        ? fixEncoding(userAddressRaw)
+        : null;
       setUserAddress(userAddressFixed);
 
       setIsAuthenticated(Boolean(token));
       setUserId(sub);
 
-      // If this session came from Google OAuth, treat the user as a customer
       const provider =
         decoded.app_metadata?.provider ||
         decoded.user_metadata?.provider ||
@@ -219,19 +213,28 @@ export const AuthProvider = ({ children }) => {
       if (sub) {
         const fetched = await fetchUserFromSupabase(sub);
         setUser(fetched);
-        // If the app_users row contains an explicit user_type, prefer it
+
+        // --- الجزء الجديد: التحقق من اكتمال الملف الشخصي ---
         if (fetched) {
+          // نتحقق من وجود الهاتف والعنوان في قاعدة البيانات
+          const hasPhone = !!fetched.phone;
+          const hasAddress = !!(fetched.address || userAddressFixed);
+          setIsProfileComplete(hasPhone && hasAddress);
+
           if (fetched.user_type) {
             setIsCustomer(fetched.user_type === "customer");
             setResturant(fetched.user_type === "restaurant");
           }
-          // Prefer the canonical name from the app_users table when available
           if (fetched.full_name) {
             setUserName(fetched.full_name);
           }
+        } else {
+          setIsProfileComplete(false);
         }
+        // ----------------------------------------------
       } else {
         setUser(null);
+        setIsProfileComplete(false);
       }
     } finally {
       setLoading(false);
@@ -249,22 +252,19 @@ export const AuthProvider = ({ children }) => {
       window.addEventListener("storage", handleStorage);
     }
 
-    // Subscribe to Supabase auth state changes for seamless OAuth integration
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        // Sync auth state changes with localStorage
         if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
           if (session?.access_token) {
             localStorage.setItem("access_token", session.access_token);
             if (session.refresh_token) {
-              localStorage.setItem("refresh_token", session.refresh_token);
+              localStorage.setItem("access_token", session.refresh_token);
             }
           }
         } else if (event === "SIGNED_OUT") {
           localStorage.removeItem("access_token");
           localStorage.removeItem("refresh_token");
         }
-        // Refresh UI state
         await refreshUser();
       }
     );
@@ -273,7 +273,6 @@ export const AuthProvider = ({ children }) => {
       if (typeof window !== "undefined") {
         window.removeEventListener("storage", handleStorage);
       }
-      // Unsubscribe from auth state changes
       authListener?.unsubscribe?.();
     };
   }, [refreshUser]);
@@ -283,6 +282,7 @@ export const AuthProvider = ({ children }) => {
       value={{
         isAuthenticated,
         isCustomer,
+        isProfileComplete, // إضافة القيمة هنا
         userId,
         userName,
         user,

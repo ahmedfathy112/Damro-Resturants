@@ -18,11 +18,11 @@ import Footer from "./Shared/Footer/Footer";
 const Home = () => {
   const [loading, setLoading] = useState(true);
 
-  // make a loading for 3 sec every time the user back to home page
+  // make a loading for 2 sec every time the user back to home page
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 2000);
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -268,7 +268,7 @@ const RecentDishesSection = () => {
   const [recentDishes, setRecentDishes] = useState([]);
   const [loading, setLoading] = useState(true);
   const { addToCart, restaurantId: currentRestaurantId } = useCart();
-  const { isCustomer } = useAuth();
+  const { isCustomer, isProfileComplete, user } = useAuth();
 
   useEffect(() => {
     fetchRecentDishes();
@@ -311,6 +311,28 @@ const RecentDishesSection = () => {
   };
 
   const handleAddToCart = (item, restaurantId) => {
+    if (!isProfileComplete) {
+      Swal.fire({
+        title: "<strong>بياناتك غير مكتملة!</strong>",
+        icon: "info",
+        html: `
+          أهلاً بك يا <b>${user?.full_name || "عزيزي"}</b>، <br/>
+          يجب إضافة <b>رقم الهاتف والعنوان</b> لتتمكن من إتمام الطلب بنجاح.
+        `,
+        showCloseButton: true,
+        showCancelButton: true,
+        focusConfirm: false,
+        confirmButtonText: '<i class="fa fa-user"></i> أكمل بياناتي الآن',
+        confirmButtonColor: "#3085d6",
+        cancelButtonText: "إلغاء",
+        cancelButtonColor: "#d33",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          router.push("/pages/userDashboard");
+        }
+      });
+      return;
+    }
     addToCart(item, restaurantId);
   };
 
