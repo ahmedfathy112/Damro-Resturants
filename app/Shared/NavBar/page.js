@@ -3,16 +3,32 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/Authcontext";
 
 const NavBar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isAuthenticated, userName, logout, isCustomer, Isresturant } =
     useAuth();
+  const router = useRouter();
   let dashboardLink;
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const handleLogoutClick = async () => {
+    try {
+      await logout();
+
+      router.refresh();
+
+      if (typeof window !== "undefined") {
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
   };
 
   if (isAuthenticated && isCustomer) {
@@ -69,7 +85,7 @@ const NavBar = () => {
               <span className="!text-blue-600">{userName?.slice(0, 10)}</span>
             </h1>
             <button
-              onClick={logout}
+              onClick={handleLogoutClick}
               className="nav-link cursor-pointer rounded-[100px] !text-white !bg-red-600 min-w-[100px] xl:min-w-[127px] !py-[8px] text-center !px-[5px] text-[14px] lg:text-[16px] hover:!bg-red-700 transition-colors duration-300"
             >
               تسجيل الخروج
@@ -147,7 +163,7 @@ const NavBar = () => {
               <span className="!text-blue-600">{userName?.slice(0, 10)}..</span>
             </h1>
             <button
-              onClick={logout}
+              onClick={handleLogoutClick}
               className="w-full rounded-[100px] !text-white !bg-red-600 !py-[10px] text-center text-[14px] hover:!bg-red-700 transition-colors duration-300 font-semibold"
             >
               تسجيل الخروج

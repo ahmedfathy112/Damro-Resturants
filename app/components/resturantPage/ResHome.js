@@ -112,9 +112,9 @@ const ResturentDatails = ({ restaurantId }) => {
 
       <div className="restop flex flex-col md:flex-row items-center h-full p-3 gap-4">
         <div className="ResturentdetailsText text-white text-right md:text-right">
-          <h2>مرحباً بك في</h2>
+          <h2 className="text-base sm:text-lg font-semibold">مرحباً بك في</h2>
           <br />
-          <h1 className="text-6xl font-bold max-md:text-5xl">
+          <h1 className="font-vintage text-4xl sm:text-5xl md:text-6xl max-md:text-5xl">
             {restaurant.name || "اسم المطعم"}
           </h1>
 
@@ -130,7 +130,11 @@ const ResturentDatails = ({ restaurantId }) => {
             {restaurant.phone && (
               <div className="flex items-center justify-end mb-2">
                 <FaPhone className="me-2" />
-                <span>{restaurant.phone}</span>
+                <span>
+                  <a href={`tel:${restaurant.phone}`} className="text-white">
+                    {restaurant.phone}
+                  </a>
+                </span>
               </div>
             )}
           </div>

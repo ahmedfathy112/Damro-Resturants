@@ -17,7 +17,8 @@ const AuthContext = createContext({
   user: null,
   loading: true,
   refreshUser: async () => {},
-  logout: () => {},
+  // define as async so TypeScript knows it returns a Promise
+  logout: async () => {},
 });
 
 function decodeJwt(token) {

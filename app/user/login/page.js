@@ -3,17 +3,19 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { FcGoogle } from "react-icons/fc";
-import { FaFacebook } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
+import { Loader2 } from "lucide-react";
 
 const LoginPages = () => {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -122,20 +124,34 @@ const LoginPages = () => {
                   كلمة المرور
                 </label>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   id="password"
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded px-3 py-2 relative"
                   placeholder="أدخل كلمة المرور"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                <button
+                  type="button"
+                  className="fixed right-2 top-1/2 -translate-y-1/2 bg-transparent border-0"
+                  style={{ zIndex: 10 }}
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-black text-white py-2 rounded text-sm font-semibold hover:bg-gray-900 transition-colors duration-200"
+                className="w-full bg-black flex flex-row items-center justify-center gap-2 text-white py-2 rounded text-sm font-semibold hover:bg-gray-900 transition-colors duration-200"
+                disabled={loading}
               >
                 تسجيل الدخول
+                {loading && (
+                  <span className="animate-spin ml-2">
+                    <Loader2 size={20} />
+                  </span>
+                )}
               </button>
             </form>
 
@@ -170,6 +186,7 @@ const LoginPages = () => {
 
           <div className="w-full lg:w-5/12 md:w-1/2 flex flex-col gap-3 mt-2 px-4">
             <p className="text-center lg:hidden">او أستخدام</p>
+            {/* google login button */}
             <button
               type="button"
               onClick={handleGoogleLogin}
@@ -177,6 +194,12 @@ const LoginPages = () => {
               className="border border-gray-800 text-gray-800 flex items-center gap-2 justify-center py-2 rounded text-sm font-medium hover:bg-gray-100 transition-colors duration-200 disabled:opacity-50"
             >
               <FcGoogle size={22} /> تسجيل الدخول بأستخدام جوجل
+              {loading && (
+                <span className="animate-spin">
+                  {" "}
+                  <Loader2 size={20} />
+                </span>
+              )}
             </button>
             <button
               disabled

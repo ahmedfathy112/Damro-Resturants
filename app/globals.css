@@ -1,6 +1,14 @@
 @import "tailwindcss";
-span {
-  font-family: "Courier New", Courier, monospace;
+
+@theme {
+  --font-sans: var(--font-body), system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+@utility font-vintage {
+  font-family: var(--font-vintage), system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  letter-spacing: 0.05em;
 }
 
 .nav-link {

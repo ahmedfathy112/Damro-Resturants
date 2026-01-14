@@ -105,11 +105,11 @@ const Home = () => {
                   أطلب من مطعمك المفضل وسيصلك أينما كنت.
                 </p>
 
-                <h1 className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight mb-2">
+                <h1 className="font-vintage text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl leading-tight mb-2">
                   طلبك بقا اسهل
                 </h1>
                 <h1
-                  className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight mb-8"
+                  className="font-vintage text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl leading-tight mb-8"
                   style={{ color: "#FC8A06" }}
                 >
                   بسرعة وطازج

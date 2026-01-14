@@ -1,4 +1,5 @@
-import { Poppins } from "next/font/google";
+import localFont from "next/font/local";
+import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import FirstNav from "./Shared/FisrtNav/page";
 import NavBar from "./Shared/NavBar/page";
@@ -8,10 +9,19 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import LoaderWrapper from "./components/LoaderWrapper";
 import { Analytics } from "@vercel/analytics/next";
 
-const poppins = Poppins({
+// Vintage display font for hero / branding only
+const vintage = localFont({
+  src: "./assets/fibre-vintage/fibre-font.otf",
+  display: "swap",
+  variable: "--font-vintage",
+});
+
+// Clean, modern body/UI font
+const bodyFont = DM_Sans({
   subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-  variable: "--font-poppins",
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-body",
+  display: "swap",
 });
 
 export const metadata = {
@@ -24,13 +34,16 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html
+      lang="en"
+      className={`${vintage.variable} ${bodyFont.variable}`}
+    >
       <script
         async
         src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4994004617022800"
         crossorigin="anonymous"
       ></script>
-      <body className={`${poppins.className} antialiased `}>
+      <body className="font-sans antialiased">
         <LoaderWrapper>
           <AuthProvider>
             <CartProvider>

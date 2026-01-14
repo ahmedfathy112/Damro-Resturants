@@ -199,9 +199,9 @@ const AllResApi = () => {
 
   return (
     <div className="AllResApi container mx-auto py-5" dir="rtl">
-      <div className="w-full">
         <div className="w-full">
-          <h1 className="text-center mb-5 text-black font-semibold text-2xl flex items-center justify-center gap-2">
+          <div className="w-full">
+            <h1 className="font-vintage text-center mb-5 text-black text-3xl sm:text-4xl flex items-center justify-center gap-2">
             <FaUtensils className="text-amber-500" />
             المطاعم المتاحة
           </h1>

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Search,
   Plus,
@@ -16,6 +17,7 @@ import { supabase } from "../../../lib/supabaseClient";
 import { compressImage } from "../../../lib/imageCompression";
 
 const ProductsTab = ({ restaurantId }) => {
+  const router = useRouter();
   const [products, setProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("الجميع");
@@ -78,23 +80,36 @@ const ProductsTab = ({ restaurantId }) => {
     return matchesSearch && matchesCategory;
   });
 
-  // رفع صورة المنتج
+  // رفع صورة المنتج (محسّن للأداء)
 
   const uploadProductImage = async (file) => {
     try {
       setUploading(true);
 
       const fileExt = file.name.split(".").pop();
-      const fileName = `${Math.random()}.${fileExt}`;
+      const fileName = `${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(7)}.${fileExt}`;
       const filePath = `${restaurantId}/${fileName}`;
 
-      // استخدام supabase للرفع (يعمل مع RLS policies الصحيحة)
-      const { error: uploadError } = await supabase.storage
+      // استخدام supabase للرفع مع إعدادات محسّنة
+      const uploadPromise = supabase.storage
         .from("menu-item-images")
         .upload(filePath, file, {
           cacheControl: "3600",
           upsert: false,
+          contentType: file.type, // تحديد نوع المحتوى لتحسين الأداء
         });
+
+      // إضافة timeout للرفع (30 ثانية)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("انتهت مهلة الرفع")), 30000)
+      );
+
+      const { error: uploadError } = await Promise.race([
+        uploadPromise,
+        timeoutPromise,
+      ]);
 
       if (uploadError) {
         console.error("Upload error details:", uploadError);
@@ -143,8 +158,10 @@ const ProductsTab = ({ restaurantId }) => {
       });
       setShowAddForm(false);
 
-      // إعادة تحميل المنتجات
-      fetchProducts();
+      // إعادة تحميل المنتجات بدون تغيير التبويب الحالي
+      await fetchProducts();
+      // تحديث بيانات السيرفر لنفس الصفحة بدون إعادة توجيه
+      router.refresh();
 
       alert("تم إضافة المنتج بنجاح!");
     } catch (error) {
@@ -203,7 +220,7 @@ const ProductsTab = ({ restaurantId }) => {
     }
   };
 
-  // معالجة تحميل الصورة
+  // معالجة تحميل الصورة (محسّن للأداء)
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -224,18 +241,40 @@ const ProductsTab = ({ restaurantId }) => {
     }
 
     try {
-      // ضغط الصورة قبل الرفع
+      // ضغط الصورة قبل الرفع (مع معالجة الأخطاء)
       setCompressing(true);
-      const compressedFile = await compressImage(file);
-      setCompressing(false);
+      let fileToUpload = file;
 
-      // رفع الصورة المضغوطة
-      const imageUrl = await uploadProductImage(compressedFile);
+      try {
+        // محاولة الضغط مع timeout
+        const compressedFile = await Promise.race([
+          compressImage(file),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Timeout")), 8000)
+          ),
+        ]);
+        fileToUpload = compressedFile;
+      } catch (compressionError) {
+        // إذا فشل الضغط، استخدم الملف الأصلي
+        console.warn(
+          "Compression skipped, using original file:",
+          compressionError
+        );
+        fileToUpload = file;
+      } finally {
+        setCompressing(false);
+      }
+
+      // رفع الصورة (المضغوطة أو الأصلية)
+      setUploading(true);
+      const imageUrl = await uploadProductImage(fileToUpload);
       setNewProduct((prev) => ({ ...prev, image_url: imageUrl }));
+      setUploading(false);
       alert("✓ تم رفع الصورة بنجاح");
     } catch (error) {
       console.error("Upload error:", error);
       setCompressing(false);
+      setUploading(false);
       alert(`خطأ في رفع الصورة: ${error.message}`);
     }
   };
@@ -418,13 +457,18 @@ const ProductsTab = ({ restaurantId }) => {
                 صورة المنتج
               </label>
               <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <label className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative">
                   <Upload size={18} />
-                  {compressing
-                    ? "جاري الضغط..."
-                    : uploading
-                    ? "جاري الرفع..."
-                    : "اختر صورة"}
+                  <span>
+                    {compressing
+                      ? "جاري الضغط..."
+                      : uploading
+                      ? "جاري الرفع..."
+                      : "اختر صورة"}
+                  </span>
+                  {(compressing || uploading) && (
+                    <span className="ml-2 inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  )}
                   <input
                     type="file"
                     accept="image/*"
