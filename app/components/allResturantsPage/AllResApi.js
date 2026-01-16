@@ -199,9 +199,9 @@ const AllResApi = () => {
 
   return (
     <div className="AllResApi container mx-auto py-5" dir="rtl">
+      <div className="w-full">
         <div className="w-full">
-          <div className="w-full">
-            <h1 className="font-vintage text-center mb-5 text-black text-3xl sm:text-4xl flex items-center justify-center gap-2">
+          <h1 className="font-vintage text-center mb-5 text-black text-3xl sm:text-4xl flex items-center justify-center gap-2">
             <FaUtensils className="text-amber-500" />
             المطاعم المتاحة
           </h1>
@@ -209,7 +209,7 @@ const AllResApi = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="mb-10 px-4">
+      <div className="mb-20 px-4">
         <div className="w-full flex flex-row justify-between mx-auto max-md:flex-col max-md:justify-center max-md:items-center gap-4">
           <h3 className="text-2xl max-md:mb-2">مطاعمنا</h3>
           <div className="flex items-center px-3 py-2 rounded border border-gray-300 bg-white">

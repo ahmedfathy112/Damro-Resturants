@@ -20,7 +20,6 @@ const NavBar = () => {
   const handleLogoutClick = async () => {
     try {
       await logout();
-
       router.refresh();
 
       if (typeof window !== "undefined") {
@@ -84,12 +83,12 @@ const NavBar = () => {
               ..مرحبا,
               <span className="!text-blue-600">{userName?.slice(0, 10)}</span>
             </h1>
-            <button
+            <a
               onClick={handleLogoutClick}
               className="nav-link cursor-pointer rounded-[100px] !text-white !bg-red-600 min-w-[100px] xl:min-w-[127px] !py-[8px] text-center !px-[5px] text-[14px] lg:text-[16px] hover:!bg-red-700 transition-colors duration-300"
             >
               تسجيل الخروج
-            </button>
+            </a>
           </div>
         ) : (
           <Link
@@ -162,18 +161,18 @@ const NavBar = () => {
               Welcome,
               <span className="!text-blue-600">{userName?.slice(0, 10)}..</span>
             </h1>
-            <button
+            <a
               onClick={handleLogoutClick}
-              className="w-full rounded-[100px] !text-white !bg-red-600 !py-[10px] text-center text-[14px] hover:!bg-red-700 transition-colors duration-300 font-semibold"
+              className="w-[90%] rounded-[100px] !text-white !bg-red-600 !py-[10px] text-center text-[14px] hover:!bg-red-700 transition-colors duration-300 font-semibold"
             >
               تسجيل الخروج
-            </button>
+            </a>
           </div>
         ) : (
-          <div className="p-5 border-t border-gray-200 mt-auto">
+          <div className="p-5 border-t border-gray-200 mt-auto flex justify-center">
             <Link
               href="/user/login"
-              className="w-full nav-link cursor-pointer rounded-[100px] !text-white !bg-[#03081f] !py-3 !px-5 text-center text-[16px] font-medium hover:!bg-[#05102a] transition-colors duration-300"
+              className="w-full nav-link cursor-pointer  rounded-[100px] !text-white !bg-[#03081f] !py-3 !px-5 text-center text-[16px] font-medium hover:!bg-[#05102a] transition-colors duration-300"
             >
               تسجيل/انشاء حساب
             </Link>

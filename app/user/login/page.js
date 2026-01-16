@@ -21,6 +21,7 @@ const LoginPages = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    // check that email and password are not empty
     if (!email || !password) {
       Swal.fire({
         icon: "error",
