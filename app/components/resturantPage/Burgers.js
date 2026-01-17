@@ -175,6 +175,8 @@ const RestaurantMenu = ({ restaurantId }) => {
                     alt={item.name}
                     width={150}
                     height={150}
+                    priority={true}
+                    placeholder="blur"
                     style={{
                       objectFit: "cover",
                       borderRadius: "5px",

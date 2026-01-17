@@ -19,8 +19,12 @@ const NavBar = () => {
 
   const handleLogoutClick = async () => {
     try {
-      await logout();
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("supabase.auth.token");
+      localStorage.removeItem("sb-rodgpnbaewagvfedxbqs-auth-token");
       router.refresh();
+      router.push("/user/login");
 
       if (typeof window !== "undefined") {
         window.location.reload();
@@ -162,7 +166,10 @@ const NavBar = () => {
               <span className="!text-blue-600">{userName?.slice(0, 10)}..</span>
             </h1>
             <a
-              onClick={handleLogoutClick}
+              onClick={() => {
+                handleLogoutClick();
+                toggleMobileMenu();
+              }}
               className="w-[90%] rounded-[100px] !text-white !bg-red-600 !py-[10px] text-center text-[14px] hover:!bg-red-700 transition-colors duration-300 font-semibold"
             >
               تسجيل الخروج
@@ -171,6 +178,7 @@ const NavBar = () => {
         ) : (
           <div className="p-5 border-t border-gray-200 mt-auto flex justify-center">
             <Link
+              onClick={toggleMobileMenu}
               href="/user/login"
               className="w-full nav-link cursor-pointer  rounded-[100px] !text-white !bg-[#03081f] !py-3 !px-5 text-center text-[16px] font-medium hover:!bg-[#05102a] transition-colors duration-300"
             >

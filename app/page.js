@@ -76,13 +76,13 @@ const Home = () => {
           />
 
           {/* Background woman image - Desktop */}
-          <div className="absolute left-0 top-0 z-10 hidden lg:block">
+          <div className="absolute left-0 top-1/5 z-10 hidden lg:block">
             <Image
               src="/images/HeroSec2.png"
               alt="Hero Section Background"
               width={805}
               height={537}
-              className="object-cover"
+              className="object-cover w-full h-full my-auto"
             />
           </div>
 
@@ -101,15 +101,15 @@ const Home = () => {
             <div className="w-full flex flex-col lg:flex-row-reverse justify-between gap-8 items-center min-h-screen py-20 lg:py-0">
               {/* Content Section */}
               <div className="w-full lg:w-1/2 text-right order-2 lg:order-1">
-                <p className="text-white/80 text-xs sm:text-sm mb-4 font-medium">
-                  أطلب من مطعمك المفضل وسيصلك أينما كنت.
+                <p className="text-white/80 text-xs sm:text-sm mb-4 font-medium max-md:text-2xl">
+                  . أطلب من مطعمك المفضل وسيصلك أينما كنت
                 </p>
 
                 <h1 className="font-vintage text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl leading-tight mb-2">
                   طلبك بقا اسهل
                 </h1>
                 <h1
-                  className="font-vintage text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl leading-tight mb-8"
+                  className="font-vintage text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl max-md:text-4xl max-md:font-semibold leading-tight mb-8"
                   style={{ color: "#FC8A06" }}
                 >
                   بسرعة وطازج
@@ -120,24 +120,24 @@ const Home = () => {
               <div className="w-full lg:w-1/2 relative flex justify-center lg:justify-start order-1 lg:order-2">
                 {/* Desktop Image */}
                 <div className="hidden lg:block">
-                  <Image
+                  {/* <Image
                     src="/images/HeroSec1.png"
                     alt="امرأة تحمل البيتزا"
                     width={565}
                     height={641}
                     className="translate-x-[100px] xl:translate-x-[200px] z-30 object-contain"
-                  />
+                  /> */}
                 </div>
 
                 {/* Mobile/Tablet Image */}
                 <div className="lg:hidden">
-                  <Image
+                  {/* <Image
                     src="/images/HeroSec1.png"
                     alt="امرأة تحمل البيتزا"
                     width={300}
                     height={350}
                     className="z-30 object-contain max-w-[250px] sm:max-w-[300px] md:max-w-[350px]"
-                  />
+                  /> */}
                 </div>
               </div>
             </div>
@@ -174,6 +174,7 @@ const Home = () => {
                   <Image
                     src="/images/PartnerWith.png"
                     alt="خلفية شراكة الأعمال"
+                    priority={true}
                     fill
                     className="object-cover"
                   />
@@ -222,6 +223,7 @@ const Home = () => {
                     src="/images/RideWith.png"
                     alt="خلفية شراكة السائقين"
                     fill
+                    priority={true}
                     className="object-cover"
                   />
                   {/* Light overlay */}
@@ -446,6 +448,7 @@ const RecentDishesSection = () => {
                         alt={dish.name}
                         fill
                         className="object-cover"
+                        priority={true}
                         onError={(e) => {
                           e.target.style.display = "none";
                         }}

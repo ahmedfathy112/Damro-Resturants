@@ -11,7 +11,7 @@ import RestaurantMenu from "../../../components/resturantPage/Burgers";
 const ResturantPage = () => {
   const params = useParams();
   const resturantId = params.id;
-  console.log(resturantId);
+
   return (
     <div>
       <ResturentDatails restaurantId={resturantId} />
