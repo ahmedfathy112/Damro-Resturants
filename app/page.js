@@ -15,6 +15,7 @@ import { useAuth } from "./context/Authcontext";
 import { Phone, Star, Utensils } from "lucide-react";
 import Footer from "./Shared/Footer/Footer";
 import Swal from "sweetalert2";
+import { useRouter } from "next/navigation";
 
 const Home = () => {
   const [loading, setLoading] = useState(true);
@@ -272,6 +273,7 @@ const RecentDishesSection = () => {
   const [loading, setLoading] = useState(true);
   const { addToCart, restaurantId: currentRestaurantId } = useCart();
   const { isCustomer, isProfileComplete, user } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     fetchRecentDishes();
