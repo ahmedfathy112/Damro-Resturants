@@ -8,6 +8,7 @@ import Image from "next/image";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/Authcontext";
 import { useRouter } from "next/navigation";
+import Swal from "sweetalert2";
 
 const RestaurantMenu = ({ restaurantId }) => {
   const [menuItems, setMenuItems] = useState([]);
