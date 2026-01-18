@@ -14,6 +14,7 @@ import { useCart } from "./context/CartContext";
 import { useAuth } from "./context/Authcontext";
 import { Phone, Star, Utensils } from "lucide-react";
 import Footer from "./Shared/Footer/Footer";
+import Swal from "sweetalert2";
 
 const Home = () => {
   const [loading, setLoading] = useState(true);
@@ -22,7 +23,7 @@ const Home = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 1500);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -37,7 +38,7 @@ const Home = () => {
   }
   return (
     <>
-      <main className=" h-screen px-[20px]">
+      <main className=" h-screen ">
         {/* Hero Section */}
         <section
           className="relative min-h-screen overflow-hidden"
@@ -313,6 +314,7 @@ const RecentDishesSection = () => {
   };
 
   const handleAddToCart = (item, restaurantId) => {
+    console.log("this is profile: " + isProfileComplete)
     if (!isProfileComplete) {
       Swal.fire({
         title: "<strong>بياناتك غير مكتملة!</strong>",
@@ -421,7 +423,7 @@ const RecentDishesSection = () => {
             {recentDishes.map((dish) => (
               <div
                 key={dish.id}
-                className="relative w-[250px] cursor-pointer hover:transform hover:scale-105 transition-all duration-300 max-md:w-[100%] max-md:!h-[360px]"
+                className="relative w-[250px] cursor-pointer hover:transform hover:scale-105 transition-all duration-300 max-md:!w-[85%] max-md:!h-[320px] max-md:mx-auto"
                 style={{
                   height: "306px",
                   borderRadius: "12px",
@@ -447,7 +449,7 @@ const RecentDishesSection = () => {
                         src={dish.image_url}
                         alt={dish.name}
                         fill
-                        className="object-cover"
+                        className="object-center w-full h-full"
                         priority={true}
                         onError={(e) => {
                           e.target.style.display = "none";
@@ -462,8 +464,8 @@ const RecentDishesSection = () => {
                     )}
                   </div>
 
-                  <div className="absolute mt-5 -bottom-3 left-0 !right-0 !p-4 !text-right">
-                    <h3 className="!text-orange-500 !font-semibold !text-lg !mb-1 truncate">
+                  <div className="absolute !mt-10 -bottom-4 left-0 !right-0 !px-4 !py-6 !text-right">
+                    <h3 className="!text-orange-500 !font-semibold !text-[17px] !mb-1 truncate ">
                       {dish.name}
                     </h3>
                     <p className="!text-white/70 !text-sm !mb-1">

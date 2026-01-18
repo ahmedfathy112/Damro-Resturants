@@ -134,7 +134,7 @@ const FirstNav = () => {
 
   return (
     <>
-      <div className="bg-[#FAFAFA] relative h-[50px] rounded-b-[12px] w-full flex justify-between cursor-pointer !px-7 max-md:flex-col max-md:!mt-5 max-md:mb-8">
+      <div className="bg-[#FAFAFA] relative h-[30px] rounded-b-[12px] w-full flex justify-between cursor-pointer !px-7 max-md:flex-col max-md:!mt-5 max-md:mb-8">
         <div className="w-full bg-[#FAFAFA] flex justify-between fixed z-[999] px-4 top-0 max-md:flex-col left-0 max-md:justify-center">
           {/* Address */}
           <div className="flex flex-row gap-3 items-center !py-3 !pl-[10px] max-md:!py-3">

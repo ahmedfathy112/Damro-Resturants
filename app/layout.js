@@ -9,14 +9,14 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import LoaderWrapper from "./components/LoaderWrapper";
 import { Analytics } from "@vercel/analytics/next";
 
-// Vintage display font for hero / branding only
+// Vintage display font for hero
 const vintage = localFont({
   src: "./assets/fibre-vintage/fibre-font.otf",
   display: "swap",
   variable: "--font-vintage",
 });
 
-// Clean, modern body/UI font
+
 const bodyFont = DM_Sans({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
@@ -35,7 +35,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html
-      lang="en"
+      lang="ar"
       className={`${vintage.variable} ${bodyFont.variable}`}
     >
       <script

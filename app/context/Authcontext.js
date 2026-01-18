@@ -49,6 +49,7 @@ export const AuthProvider = ({ children }) => {
   const [Isresturant, setResturant] = useState(false);
   const [resturantAddress, setResturantAddress] = useState(null);
   const [userAddress, setUserAddress] = useState(null);
+  const [isProfileComplete, setIsProfileCompelte] = useState(null)
 
   const router = useRouter();
 
@@ -166,7 +167,7 @@ export const AuthProvider = ({ children }) => {
 
       let fullName = fullNameRaw ? fixEncoding(fullNameRaw) : null;
 
-      // Fallback: if fullName is not in JWT, try Supabase auth user metadata
+      //  if fullName is not in JWT, try Supabase auth user metadata
       if (!fullName && typeof window !== "undefined") {
         try {
           const { data: authUser } = await supabase.auth.getUser();
@@ -196,6 +197,11 @@ export const AuthProvider = ({ children }) => {
         decoded.user_metadata?.address || decoded.address || null;
       const userAddressFixed = userAddress ? fixEncoding(userAddress) : null;
       setUserAddress(userAddressFixed);
+      if (!userAddressFixed) {
+        setIsProfileCompelte(false)
+      } else {
+        setIsProfileCompelte(true)
+      }
 
       setIsAuthenticated(Boolean(token));
       setUserId(sub);
@@ -283,6 +289,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         isAuthenticated,
+        isProfileComplete,
         isCustomer,
         userId,
         userName,
