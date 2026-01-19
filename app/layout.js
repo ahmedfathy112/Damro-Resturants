@@ -47,7 +47,7 @@ export default function RootLayout({ children }) {
         <LoaderWrapper>
           <AuthProvider>
             <CartProvider>
-              <FirstNav />
+              {/* <FirstNav /> */}
               <NavBar />
               {children}
               <SpeedInsights />

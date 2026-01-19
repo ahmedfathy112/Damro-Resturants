@@ -9,6 +9,7 @@ import { MdAddLocationAlt } from "react-icons/md";
 import Swal from "sweetalert2";
 
 import { useCart } from "../../context/CartContext";
+import { supabase } from "../../lib/supabaseClient";
 
 
 const FirstNav = () => {
