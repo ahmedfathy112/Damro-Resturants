@@ -8,6 +8,7 @@ import { CartProvider } from "../app/context/CartContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import LoaderWrapper from "./components/LoaderWrapper";
 import { Analytics } from "@vercel/analytics/next";
+import { RealtimeProvider } from "./context/RealtimeProvider";
 
 // Vintage display font for hero
 const vintage = localFont({
@@ -45,6 +46,7 @@ export default function RootLayout({ children }) {
       ></script>
       <body className="font-sans antialiased">
         <LoaderWrapper>
+          <RealtimeProvider>
           <AuthProvider>
             <CartProvider>
               {/* <FirstNav /> */}
@@ -53,7 +55,8 @@ export default function RootLayout({ children }) {
               <SpeedInsights />
               <Analytics />
             </CartProvider>
-          </AuthProvider>
+            </AuthProvider>
+            </RealtimeProvider>
         </LoaderWrapper>
       </body>
     </html>

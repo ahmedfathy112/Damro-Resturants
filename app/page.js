@@ -16,6 +16,7 @@ import { Phone, Star, Utensils } from "lucide-react";
 import Footer from "./Shared/Footer/Footer";
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
+import { useGlobalRealtime } from "./context/RealtimeProvider";
 
 const Home = () => {
   const [loading, setLoading] = useState(true);
@@ -271,50 +272,66 @@ export default Home;
 const RecentDishesSection = () => {
   const [recentDishes, setRecentDishes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error , setError] = useState("")
   const { addToCart, restaurantId: currentRestaurantId } = useCart();
   const { isCustomer, isProfileComplete, user } = useAuth();
+  const { lastUpdate } = useGlobalRealtime();
   const router = useRouter();
 
   useEffect(() => {
     fetchRecentDishes();
   }, []);
 
-  const fetchRecentDishes = async () => {
-    try {
-      setLoading(true);
+ const fetchRecentDishes = async () => {
+  try {
+    
+    setLoading(true);
+    if (setError) setError(null); 
 
-      const { data, error } = await supabase
-        .from("menu_items")
-        .select(
-          `
+    const { data, error } = await supabase
+      .from("menu_items")
+      .select(`
+        id,
+        name,
+        price,
+        image_url,
+        description,
+        created_at,
+        restaurants (
           id,
-          name,
-          price,
-          image_url,
-          description,
-          created_at,
-          restaurants (
-            id,
-            name
-          )
-        `
+          name
         )
-        .order("created_at", { ascending: false })
-        .limit(5);
+      `)
+      .order("created_at", { ascending: false })
+      .limit(5);
 
-      if (error) {
-        console.error("Error fetching recent dishes:", error);
-        return;
-      }
+    
+    if (error) throw error;
 
-      setRecentDishes(data || []);
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    
+    setRecentDishes(data || []);
 
+  } catch (error) {
+    console.error("Error fetching recent dishes:", error.message);
+    
+    if (setError) setError("عذراً، فشلنا في تحميل أحدث الأطباق.");
+  } finally {
+    
+    setLoading(false);
+  }
+};
+useEffect(() => {
+  fetchRecentDishes();
+}, []);
+
+// real time for recentDishes 
+useEffect(() => {
+  if (lastUpdate && lastUpdate.table === 'menu_items') {
+    
+    console.log("تحديث قائمة أحدث الأطباق...");
+    fetchRecentDishes();
+  }
+}, [lastUpdate]);
   const handleAddToCart = (item, restaurantId) => {
     console.log("this is profile: " + isProfileComplete)
     if (!isProfileComplete) {
