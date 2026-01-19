@@ -197,7 +197,41 @@ export const AuthProvider = ({ children }) => {
         decoded.user_metadata?.address || decoded.address || null;
       const userAddressFixed = userAddress ? fixEncoding(userAddress) : null;
       setUserAddress(userAddressFixed);
-      if (!userAddressFixed) {
+
+
+//     const fetchUserProfile = async () => {
+//       if (!userId) return;
+
+//       try {
+//         setLoading(true);
+//         const { data, error } = await supabase
+//           .from("app_users")
+//           .select(" phone, address")
+//           .eq("id", userId)
+//           .single();
+
+//         if (error) {
+//           throw error;
+//         }
+// console.log(data)
+//         // if (data) {
+//         //   setUser(data)          
+//         //   setFormData({
+//         //     phone: data.phone || "",
+//         //     address: data.address || "",
+//         //   });
+//         // }
+//       } catch (err) {
+//         setError(err.message);
+//         console.error("Error fetching user profile:", err);
+//       } finally {
+//         setLoading(false);
+//       }
+//       };
+//       fetchUserProfile();
+
+
+      if (userAddressFixed === null && userAddressFixed === "لم يتم تحديده") {
         setIsProfileCompelte(false)
       } else {
         setIsProfileCompelte(true)
