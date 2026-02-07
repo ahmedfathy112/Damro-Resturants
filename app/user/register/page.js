@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import {
@@ -585,11 +586,13 @@ const RegisterPage = () => {
               background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
             }}
           >
-            <img
-              src="/images/register.png"
+            <Image
+              src="/images/register.webp"
               alt="تسجيل جديد"
+              width={360}
+              height={240}
               className="mb-4 max-h-60 mx-auto"
-              style={{ maxHeight: "240px" }}
+              style={{ maxHeight: "240px", width: "100%", height: "auto" }}
             />
 
             <h4 className="mb-4 fw-bold text-white">لماذا تنضم إلينا؟</h4>

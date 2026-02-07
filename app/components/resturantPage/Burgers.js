@@ -59,7 +59,7 @@ const RestaurantMenu = ({ restaurantId }) => {
       setFilteredItems(menuItems);
     } else {
       setFilteredItems(
-        menuItems.filter((item) => item.category === selectedCategory)
+        menuItems.filter((item) => item.category === selectedCategory),
       );
     }
   }, [menuItems, selectedCategory]);
@@ -177,7 +177,6 @@ const RestaurantMenu = ({ restaurantId }) => {
                     width={150}
                     height={150}
                     priority={true}
-                    placeholder="blur"
                     style={{
                       objectFit: "cover",
                       borderRadius: "5px",

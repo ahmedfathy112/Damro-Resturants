@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Star, Search, Filter, Calendar, User } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useAuth } from "../../../context/Authcontext";
 
@@ -14,6 +15,18 @@ const Reviews = (restaurantId) => {
   const [sortBy, setSortBy] = useState("newest");
   const [restaurant, setRestaurant] = useState(null);
   const { userId } = useAuth();
+
+  const getImageSrc = (url) => {
+    if (!url) return null;
+    try {
+      if (typeof url === "string" && url.includes("/images/")) {
+        return url.replace(/\.(png|jpe?g)$/i, ".webp");
+      }
+      return url;
+    } catch (e) {
+      return url;
+    }
+  };
 
   useEffect(() => {
     if (userId) {
@@ -52,7 +65,7 @@ const Reviews = (restaurantId) => {
             full_name,
             email
           )
-        `
+        `,
         )
         .eq("restaurant_id", userId)
         .order("created_at", { ascending: false });
@@ -170,10 +183,13 @@ const Reviews = (restaurantId) => {
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
           <div className="flex items-center gap-4 mb-4">
             {restaurant?.image_url && (
-              <img
-                src={restaurant.image_url}
+              <Image
+                src={getImageSrc(restaurant.image_url)}
                 alt={restaurant.name}
+                width={64}
+                height={64}
                 className="w-16 h-16 rounded-lg object-cover"
+                style={{ width: "64px", height: "64px", objectFit: "cover" }}
               />
             )}
             <div>
@@ -216,7 +232,7 @@ const Reviews = (restaurantId) => {
                     (
                     {totalReviews > 0
                       ? Math.round(
-                          (ratingDistribution[rating] / totalReviews) * 100
+                          (ratingDistribution[rating] / totalReviews) * 100,
                         )
                       : 0}
                     %)

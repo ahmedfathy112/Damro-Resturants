@@ -1,15 +1,19 @@
 import Link from "next/link";
 import React from "react";
+import Image from "next/image";
 
 const Footer = () => {
   return (
     <footer className="w-full bg-gray-800 flex flex-row flex-wrap justify-between py-5 px-7 max-md:flex-col max-md:px-3 max-md:justify-center">
       {/* website logo */}
       <div>
-        <img
-          src="/images/logo.png"
+        <Image
+          src="/images/logo.webp"
           alt="website logo"
+          width={100}
+          height={100}
           className="w-[100px] h-[100px] max-md:mx-auto max-md:w-[150px] max-md:h-[150px]"
+          // style={{ width: "1/5", height: "auto" }}
         />
       </div>
       {/* quick links */}

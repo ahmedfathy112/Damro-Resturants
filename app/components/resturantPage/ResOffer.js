@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import { CiSearch } from "react-icons/ci";
 import { IoMdAdd } from "react-icons/io";
 
@@ -75,10 +76,17 @@ const ResturentOffer = () => {
                   className="relative overflow-hidden rounded-lg"
                   style={{ borderRadius: "10px" }}
                 >
-                  <img
-                    src="/images/ResDeHome.png"
+                  <Image
+                    src="/images/ResDeHome.webp"
                     alt="..."
+                    width={1200}
+                    height={600}
                     className="w-full h-80 object-cover"
+                    style={{
+                      objectFit: "cover",
+                      width: "100%",
+                      height: "auto",
+                    }}
                   />
 
                   <div

@@ -16,6 +16,19 @@ import {
 } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
 import { compressImage } from "../../../lib/imageCompression";
+import Image from "next/image";
+
+const getImageSrc = (url) => {
+  if (!url) return null;
+  try {
+    if (typeof url === "string" && url.includes("/images/")) {
+      return url.replace(/\.(png|jpe?g)$/i, ".webp");
+    }
+    return url;
+  } catch (e) {
+    return url;
+  }
+};
 
 const ProductsTab = ({ restaurantId }) => {
   const router = useRouter();
@@ -64,13 +77,11 @@ const ProductsTab = ({ restaurantId }) => {
     }
   };
 
-  
   const categories = [
     "الجميع",
     ...new Set(products.map((product) => product.category).filter(Boolean)),
   ];
 
-  
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -82,61 +93,63 @@ const ProductsTab = ({ restaurantId }) => {
     return matchesSearch && matchesCategory;
   });
 
-  
+  const uploadProductImage = async (file) => {
+    try {
+      setUploading(true);
+      setUploadProgress(20);
 
- const uploadProductImage = async (file) => {
-  try {
-    setUploading(true);
-    setUploadProgress(20); 
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `${restaurantId}/${fileName}`;
 
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const filePath = `${restaurantId}/${fileName}`;
+      const uploadPromise = supabase.storage
+        .from("menu-item-images")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: file.type,
+        });
 
-    
-    const uploadPromise = supabase.storage
-      .from("menu-item-images")
-      .upload(filePath, file, {
-        cacheControl: "3600",
-        upsert: false,
-        contentType: file.type,
-      });
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => (prev < 90 ? prev + 5 : prev));
+      }, 800);
 
-    const progressInterval = setInterval(() => {
-      setUploadProgress((prev) => (prev < 90 ? prev + 5 : prev));
-    }, 800);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error("انتهت مهلة الرفع - الإنترنت ضعيف جداً")),
+          120000,
+        ),
+      );
 
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("انتهت مهلة الرفع - الإنترنت ضعيف جداً")), 120000)
-    );
+      const { data, error: uploadError } = await Promise.race([
+        uploadPromise,
+        timeoutPromise,
+      ]);
 
-    const { data, error: uploadError } = await Promise.race([
-      uploadPromise,
-      timeoutPromise,
-    ]);
+      clearInterval(progressInterval);
 
-    clearInterval(progressInterval); 
+      if (uploadError) {
+        console.error("Upload error details:", uploadError);
+        throw new Error("فشل في رفع الصورة: " + uploadError.message);
+      }
 
-    if (uploadError) {
-      console.error("Upload error details:", uploadError);
-      throw new Error("فشل في رفع الصورة: " + uploadError.message);
+      // 4. الحصول على الرابط وتحديث التقدم لـ 100%
+      setUploadProgress(100);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("menu-item-images").getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      setUploadProgress(0); // إعادة تعيين الشريط في حالة الخطأ
+      throw new Error(error.message);
+    } finally {
+      setUploading(false);
+      // إخفاء الشريط بعد ثانية من النجاح
+      setTimeout(() => setUploadProgress(0), 1000);
     }
-
-    // 4. الحصول على الرابط وتحديث التقدم لـ 100%
-    setUploadProgress(100);
-    const { data: { publicUrl } } = supabase.storage.from("menu-item-images").getPublicUrl(filePath);
-
-    return publicUrl;
-  } catch (error) {
-    console.error("Error uploading image:", error);
-    setUploadProgress(0); // إعادة تعيين الشريط في حالة الخطأ
-    throw new Error(error.message);
-  } finally {
-    setUploading(false);
-    // إخفاء الشريط بعد ثانية من النجاح
-    setTimeout(() => setUploadProgress(0), 1000);
-  }
-};
+  };
 
   // إضافة منتج جديد
   const handleAddProduct = async (e) => {
@@ -196,8 +209,8 @@ const ProductsTab = ({ restaurantId }) => {
         prevProducts.map((product) =>
           product.id === productId
             ? { ...product, is_available: !currentStatus }
-            : product
-        )
+            : product,
+        ),
       );
     } catch (error) {
       console.error("Error toggling product availability:", error);
@@ -218,7 +231,7 @@ const ProductsTab = ({ restaurantId }) => {
 
       // تحديث الحالة المحلية
       setProducts((prevProducts) =>
-        prevProducts.filter((product) => product.id !== productId)
+        prevProducts.filter((product) => product.id !== productId),
       );
 
       alert("تم حذف المنتج بنجاح!");
@@ -228,63 +241,61 @@ const ProductsTab = ({ restaurantId }) => {
     }
   };
 
-  
-
   const handleImageUpload = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+    const file = e.target.files[0];
+    if (!file) return;
 
-  if (file.size > 8 * 1024 * 1024) { 
-    alert("حجم الصورة كبير جداً، يرجى اختيار صورة أصغر");
-    return;
-  }
-
-  const validTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
-  if (!validTypes.includes(file.type)) {
-    alert("نوع الملف غير مدعوم. يرجى استخدام صورة JPEG, PNG, أو WebP");
-    return;
-  }
-
-  try {
-    setUploadProgress(5); 
-    setCompressing(true);
-    let fileToUpload = file;
-
-    try {
-      const compressedFile = await Promise.race([
-        compressImage(file),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Timeout")), 15000)
-        ),
-      ]);
-      fileToUpload = compressedFile;
-      setUploadProgress(30); 
-    } catch (compressionError) {
-      console.warn("استخدام الملف الأصلي بسبب تعذر الضغط:", compressionError);
-      fileToUpload = file;
-      setUploadProgress(20); 
-    } finally {
-      setCompressing(false);
+    if (file.size > 8 * 1024 * 1024) {
+      alert("حجم الصورة كبير جداً، يرجى اختيار صورة أصغر");
+      return;
     }
 
-    const imageUrl = await uploadProductImage(fileToUpload);
-    
-    setNewProduct((prev) => ({ ...prev, image_url: imageUrl }));
-    setUploadProgress(100); 
-    
-    // تنبيه بسيط
-    // alert("✓ تم رفع الصورة بنجاح"); // يفضل تشيل الـ alert لو ضفت شريط التحميل عشان التجربة تكون أنعم
-  } catch (error) {
-    console.error("Upload error:", error);
-    setUploadProgress(0); // تصفير الشريط عند الخطأ
-    alert(`خطأ في رفع الصورة: ${error.message}`);
-  } finally {
-    setCompressing(false);
-    setUploading(false);
-    // إخفاء الشريط بعد ثانية
-    setTimeout(() => setUploadProgress(0), 1000);
-  }
-};
+    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+    if (!validTypes.includes(file.type)) {
+      alert("نوع الملف غير مدعوم. يرجى استخدام صورة JPEG, PNG, أو WebP");
+      return;
+    }
+
+    try {
+      setUploadProgress(5);
+      setCompressing(true);
+      let fileToUpload = file;
+
+      try {
+        const compressedFile = await Promise.race([
+          compressImage(file),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Timeout")), 15000),
+          ),
+        ]);
+        fileToUpload = compressedFile;
+        setUploadProgress(30);
+      } catch (compressionError) {
+        console.warn("استخدام الملف الأصلي بسبب تعذر الضغط:", compressionError);
+        fileToUpload = file;
+        setUploadProgress(20);
+      } finally {
+        setCompressing(false);
+      }
+
+      const imageUrl = await uploadProductImage(fileToUpload);
+
+      setNewProduct((prev) => ({ ...prev, image_url: imageUrl }));
+      setUploadProgress(100);
+
+      // تنبيه بسيط
+      // alert("✓ تم رفع الصورة بنجاح"); // يفضل تشيل الـ alert لو ضفت شريط التحميل عشان التجربة تكون أنعم
+    } catch (error) {
+      console.error("Upload error:", error);
+      setUploadProgress(0); // تصفير الشريط عند الخطأ
+      alert(`خطأ في رفع الصورة: ${error.message}`);
+    } finally {
+      setCompressing(false);
+      setUploading(false);
+      // إخفاء الشريط بعد ثانية
+      setTimeout(() => setUploadProgress(0), 1000);
+    }
+  };
 
   if (loading) {
     return (
@@ -355,174 +366,186 @@ const ProductsTab = ({ restaurantId }) => {
         </div>
       </div>
 
-{showAddForm && (
-  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-    <div className="flex items-center justify-between mb-4">
-      <h3 className="text-lg font-semibold text-gray-800">إضافة منتج جديد</h3>
-      <button
-        onClick={() => setShowAddForm(false)}
-        className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
-      >
-        <X size={20} />
-      </button>
-    </div>
-
-    <form onSubmit={handleAddProduct} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            اسم المنتج *
-          </label>
-          <input
-            type="text"
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-            value={newProduct.name}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, name: e.target.value })
-            }
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            السعر (ج.م) *
-          </label>
-          <input
-            type="number"
-            required
-            step="0.01"
-            min="0"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-            value={newProduct.price}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, price: e.target.value })
-            }
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            الفئة *
-          </label>
-          <select
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-            value={newProduct.category}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, category: e.target.value })
-            }
-          >
-            <option value="">اختر الفئة</option>
-            <option value="المقبلات">المقبلات</option>
-            <option value="الأطباق الرئيسية">الأطباق الرئيسية</option>
-            <option value="الحلويات">الحلويات</option>
-            <option value="المشروبات">المشروبات</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            وقت التحضير (دقيقة)
-          </label>
-          <input
-            type="number"
-            min="0"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-            value={newProduct.preparation_time}
-            onChange={(e) =>
-              setNewProduct({
-                ...newProduct,
-                preparation_time: e.target.value,
-              })
-            }
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          وصف المنتج
-        </label>
-        <textarea
-          rows="3"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none outline-none"
-          value={newProduct.description}
-          onChange={(e) =>
-            setNewProduct({ ...newProduct, description: e.target.value })
-          }
-        />
-      </div>
-
-      {/* قسم صورة المنتج وشريط التحميل */}
-      <div className="space-y-3">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          صورة المنتج
-        </label>
-        
-        <div className="flex items-center gap-4">
-          <label className={`flex items-center gap-2 px-4 py-2 ${uploading || compressing ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-lg cursor-pointer transition-colors relative`}>
-            <Upload size={18} />
-            <span>
-              {compressing ? "جاري المعالجة..." : uploading ? "جاري الرفع..." : "اختر صورة"}
-            </span>
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageUpload}
-              disabled={uploading || compressing}
-            />
-          </label>
-
-          {newProduct.image_url && !uploading && !compressing && (
-            <div className="flex items-center gap-1 text-sm text-green-600 font-medium">
-              <CheckCircle size={18} />
-              <span>تم الرفع بنجاح</span>
-            </div>
-          )}
-        </div>
-
-        {/* شريط التحميل التفاعلي */}
-        {(uploading || compressing) && (
-          <div className="w-full max-w-md bg-gray-50 p-3 rounded-lg border border-gray-100">
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-xs font-medium text-gray-600">
-                {compressing ? "تحسين جودة الصورة..." : "جاري النشر على السيرفر..."}
-              </span>
-              <span className="text-xs font-bold text-blue-600">{uploadProgress}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-blue-600 h-full rounded-full transition-all duration-300 ease-out shadow-[0_0_8px_rgba(37,99,235,0.3)]"
-                style={{ width: `${uploadProgress}%` }}
-              ></div>
-            </div>
+      {showAddForm && (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-800">
+              إضافة منتج جديد
+            </h3>
+            <button
+              onClick={() => setShowAddForm(false)}
+              className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <X size={20} />
+            </button>
           </div>
-        )}
-      </div>
 
-      <div className="flex gap-4 pt-4 border-t border-gray-50">
-        <button
-          type="submit"
-          disabled={uploading || compressing}
-          className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-        >
-          إضافة المنتج
-        </button>
-        <button
-          type="button"
-          onClick={() => setShowAddForm(false)}
-          className="px-6 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-        >
-          إلغاء
-        </button>
-      </div>
-    </form>
-  </div>
-)}
+          <form onSubmit={handleAddProduct} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  اسم المنتج *
+                </label>
+                <input
+                  type="text"
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newProduct.name}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, name: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  السعر (ج.م) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  step="0.01"
+                  min="0"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newProduct.price}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, price: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  الفئة *
+                </label>
+                <select
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                  value={newProduct.category}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, category: e.target.value })
+                  }
+                >
+                  <option value="">اختر الفئة</option>
+                  <option value="المقبلات">المقبلات</option>
+                  <option value="الأطباق الرئيسية">الأطباق الرئيسية</option>
+                  <option value="الحلويات">الحلويات</option>
+                  <option value="المشروبات">المشروبات</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  وقت التحضير (دقيقة)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newProduct.preparation_time}
+                  onChange={(e) =>
+                    setNewProduct({
+                      ...newProduct,
+                      preparation_time: e.target.value,
+                    })
+                  }
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                وصف المنتج
+              </label>
+              <textarea
+                rows="3"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none outline-none"
+                value={newProduct.description}
+                onChange={(e) =>
+                  setNewProduct({ ...newProduct, description: e.target.value })
+                }
+              />
+            </div>
+
+            {/* قسم صورة المنتج وشريط التحميل */}
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                صورة المنتج
+              </label>
+
+              <div className="flex items-center gap-4">
+                <label
+                  className={`flex items-center gap-2 px-4 py-2 ${uploading || compressing ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"} text-white rounded-lg cursor-pointer transition-colors relative`}
+                >
+                  <Upload size={18} />
+                  <span>
+                    {compressing
+                      ? "جاري المعالجة..."
+                      : uploading
+                        ? "جاري الرفع..."
+                        : "اختر صورة"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                    disabled={uploading || compressing}
+                  />
+                </label>
+
+                {newProduct.image_url && !uploading && !compressing && (
+                  <div className="flex items-center gap-1 text-sm text-green-600 font-medium">
+                    <CheckCircle size={18} />
+                    <span>تم الرفع بنجاح</span>
+                  </div>
+                )}
+              </div>
+
+              {/* شريط التحميل التفاعلي */}
+              {(uploading || compressing) && (
+                <div className="w-full max-w-md bg-gray-50 p-3 rounded-lg border border-gray-100">
+                  <div className="flex justify-between items-center mb-1.5">
+                    <span className="text-xs font-medium text-gray-600">
+                      {compressing
+                        ? "تحسين جودة الصورة..."
+                        : "جاري النشر على السيرفر..."}
+                    </span>
+                    <span className="text-xs font-bold text-blue-600">
+                      {uploadProgress}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-600 h-full rounded-full transition-all duration-300 ease-out shadow-[0_0_8px_rgba(37,99,235,0.3)]"
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-4 pt-4 border-t border-gray-50">
+              <button
+                type="submit"
+                disabled={uploading || compressing}
+                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                إضافة المنتج
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAddForm(false)}
+                className="px-6 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              >
+                إلغاء
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* شبكة المنتجات */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -548,17 +571,20 @@ const ProductsTab = ({ restaurantId }) => {
             >
               {/* صورة المنتج */}
               <div className="relative">
-                <img
-                  src={product.image_url || "/placeholder-food.jpg"}
+                <Image
+                  src={getImageSrc(product.image_url) || "/images/food.webp"}
                   alt={product.name}
+                  width={400}
+                  height={300}
                   className="w-full h-48 object-cover"
+                  style={{ objectFit: "cover", width: "100%", height: "auto" }}
                 />
                 <div className="absolute top-2 left-2">
                   <button
                     onClick={() =>
                       toggleProductAvailability(
                         product.id,
-                        product.is_available
+                        product.is_available,
                       )
                     }
                     className={`p-2 rounded-full ${

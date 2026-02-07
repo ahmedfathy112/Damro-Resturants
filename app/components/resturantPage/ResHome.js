@@ -163,11 +163,13 @@ const ResturentDatails = ({ restaurantId }) => {
               style={{ objectFit: "cover", width: "200px", height: "200px" }}
             />
           ) : (
-            <img
-              src="/images/ResDeHome.png"
+            <Image
+              src="/images/ResDeHome.webp"
               alt="صورة تفاصيل المطعم"
+              width={200}
+              height={200}
               className="rounded"
-              style={{ width: "200px", height: "200px", objectFit: "cover" }}
+              style={{ objectFit: "cover", width: "200px", height: "200px" }}
             />
           )}
 

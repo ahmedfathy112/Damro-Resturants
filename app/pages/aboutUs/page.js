@@ -1,5 +1,6 @@
 import Link from "next/link";
 import React from "react";
+import Image from "next/image";
 
 const AboutUs = () => {
   return (
@@ -18,7 +19,14 @@ const AboutUs = () => {
       <div className="w-full flex flex-row justify-between mt-10 max-md:flex-col-reverse">
         {/* first sec image */}
         <div className="w-1/2 max-md:w-full">
-          <img src="/images/aboutUsImage.png" alt="aboutUsImage" />
+          <Image
+            src="/images/aboutUsImage.webp"
+            alt="aboutUsImage"
+            width={1200}
+            height={800}
+            className="w-full h-auto"
+            style={{ width: "100%", height: "auto" }}
+          />
         </div>
         <div className="w-1/2 flex items-center flex-col justify-between max-md:w-full">
           {/* first sec content */}
@@ -66,7 +74,14 @@ const AboutUs = () => {
         </div>
         {/* image of last sec */}
         <div className="w-1/2 flex justify-end max-md:justify-center max-md:w-full">
-          <img src="/images/aboutUsImage2.png" alt="aboutUsImage2" />
+          <Image
+            src="/images/aboutUsImage2.webp"
+            alt="aboutUsImage2"
+            width={1200}
+            height={800}
+            className="w-full h-auto"
+            style={{ width: "100%", height: "auto" }}
+          />
         </div>
       </div>
     </div>

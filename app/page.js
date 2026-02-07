@@ -81,7 +81,7 @@ const Home = () => {
           {/* Background woman image - Desktop */}
           <div className="absolute left-0 top-1/5 z-10 hidden lg:block">
             <Image
-              src="/images/HeroSec2.png"
+              src="/images/HeroSec2.webp"
               alt="Hero Section Background"
               width={805}
               height={537}
@@ -92,7 +92,7 @@ const Home = () => {
           {/* Background woman image - Mobile/Tablet */}
           <div className="absolute left-0 top-0 z-10 lg:hidden opacity-30">
             <Image
-              src="/images/HeroSec2.png"
+              src="/images/HeroSec2.webp"
               alt="Hero Section Background"
               width={400}
               height={300}
@@ -175,7 +175,7 @@ const Home = () => {
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
                   <Image
-                    src="/images/PartnerWith.png"
+                    src="/images/PartnerWith.webp"
                     alt="خلفية شراكة الأعمال"
                     priority={true}
                     fill
@@ -223,7 +223,7 @@ const Home = () => {
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
                   <Image
-                    src="/images/RideWith.png"
+                    src="/images/RideWith.webp"
                     alt="خلفية شراكة السائقين"
                     fill
                     priority={true}
@@ -272,7 +272,7 @@ export default Home;
 const RecentDishesSection = () => {
   const [recentDishes, setRecentDishes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error , setError] = useState("")
+  const [error, setError] = useState("");
   const { addToCart, restaurantId: currentRestaurantId } = useCart();
   const { isCustomer, isProfileComplete, user } = useAuth();
   const { lastUpdate } = useGlobalRealtime();
@@ -282,15 +282,15 @@ const RecentDishesSection = () => {
     fetchRecentDishes();
   }, []);
 
- const fetchRecentDishes = async () => {
-  try {
-    
-    setLoading(true);
-    if (setError) setError(null); 
+  const fetchRecentDishes = async () => {
+    try {
+      setLoading(true);
+      if (setError) setError(null);
 
-    const { data, error } = await supabase
-      .from("menu_items")
-      .select(`
+      const { data, error } = await supabase
+        .from("menu_items")
+        .select(
+          `
         id,
         name,
         price,
@@ -301,39 +301,35 @@ const RecentDishesSection = () => {
           id,
           name
         )
-      `)
-      .order("created_at", { ascending: false })
-      .limit(5);
+      `,
+        )
+        .order("created_at", { ascending: false })
+        .limit(5);
 
-    
-    if (error) throw error;
+      if (error) throw error;
 
-    
-    setRecentDishes(data || []);
+      setRecentDishes(data || []);
+    } catch (error) {
+      console.error("Error fetching recent dishes:", error.message);
 
-  } catch (error) {
-    console.error("Error fetching recent dishes:", error.message);
-    
-    if (setError) setError("عذراً، فشلنا في تحميل أحدث الأطباق.");
-  } finally {
-    
-    setLoading(false);
-  }
-};
-useEffect(() => {
-  fetchRecentDishes();
-}, []);
-
-// real time for recentDishes 
-useEffect(() => {
-  if (lastUpdate && lastUpdate.table === 'menu_items') {
-    
-    console.log("تحديث قائمة أحدث الأطباق...");
+      if (setError) setError("عذراً، فشلنا في تحميل أحدث الأطباق.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
     fetchRecentDishes();
-  }
-}, [lastUpdate]);
+  }, []);
+
+  // real time for recentDishes
+  useEffect(() => {
+    if (lastUpdate && lastUpdate.table === "menu_items") {
+      console.log("تحديث قائمة أحدث الأطباق...");
+      fetchRecentDishes();
+    }
+  }, [lastUpdate]);
   const handleAddToCart = (item, restaurantId) => {
-    console.log("this is profile: " + isProfileComplete)
+    console.log("this is profile: " + isProfileComplete);
     if (!isProfileComplete) {
       Swal.fire({
         title: "<strong>بياناتك غير مكتملة!</strong>",
@@ -563,7 +559,7 @@ const RecentRestaurantsSection = () => {
           address,
           menu_items (id),
           reviews (rating)
-        `
+        `,
         )
         .order("created_at", { ascending: false })
         .limit(5);
